@@ -11,8 +11,8 @@ from libcpp.vector cimport vector
 np.import_array()
 
 cdef extern from "./cuda/ce.h":
-    cdef cppclass ConditionalEntropy:
-        ConditionalEntropy(size_t num_phase,
+    cdef cppclass CppConditionalEntropy "ConditionalEntropy":
+        CppConditionalEntropy(size_t num_phase,
                         size_t num_mag,
                         size_t num_phase_overlap,
                         size_t num_mag_overlap)
@@ -33,20 +33,37 @@ cdef extern from "./cuda/ce.h":
                                  const size_t num_periods,
                                  const size_t num_p_dts) const;
 
-cdef class PyConditionalEntropy:
-    cdef ConditionalEntropy* ce
+cdef class ConditionalEntropy:
+    cdef CppConditionalEntropy* ce
 
     def __cinit__(self,
                   n_phase=10,
                   n_mag=10,
                   n_phase_overlap=0,
                   n_mag_overlap=0):
-        self.ce = new ConditionalEntropy(
+        self.ce = new CppConditionalEntropy(
             n_phase,
             n_mag,
             n_phase_overlap,
             n_mag_overlap)
     
+    def calc_one(self,
+                 np.ndarray[ndim=1, dtype=np.float32_t] times not None,
+                 np.ndarray[ndim=1, dtype=np.float32_t] mags not None,
+                 np.ndarray[ndim=1, dtype=np.float32_t] periods not None,
+                 np.ndarray[ndim=1, dtype=np.float32_t] period_dts not None):
+        d_len = len(times)
+        n_per = len(periods)
+        n_pdt = len(period_dts)
+        cdef float* ces = \
+            self.ce.CalcCEVals(&times[0], &mags[0], d_len, &periods[0], &period_dts[0], n_per, n_pdt)
+        cdef np.npy_intp dim[2]
+        dim[0] = n_per
+        dim[1] = n_pdt
+        cdef np.ndarray[ndim=2, dtype=np.float32_t] ces_ndarr = \
+            np.PyArray_SimpleNewFromData(2, dim, np.NPY_FLOAT, ces)
+        return ces_ndarr
+
     def calc(self,
              list times,
              list mags,
@@ -107,9 +124,9 @@ cdef class PyConditionalEntropy:
                 )
 
                 stats = Statistics(
-                    [periods[argmin[0]], period_dts[argmin[0]]],
+                    [periods[argmin[0]], period_dts[argmin[1]]],
                     means[i],
-                    ces_ndarr[argmin],
+                    ces_ndarr[i][argmin],
                     stds[i],
                 )
 
