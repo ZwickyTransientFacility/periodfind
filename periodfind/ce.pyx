@@ -95,7 +95,7 @@ cdef class PyConditionalEntropy:
             np.PyArray_SimpleNewFromData(3, dim, np.NPY_FLOAT, ces)
         
         if output == 'stats':
-            axis = (n_per, n_pdt)
+            axis = (1, 2)
             means = np.mean(ces_ndarr, axis=axis, dtype=np.float64)
             stds = np.std(ces_ndarr, axis=axis, dtype=np.float64)
 

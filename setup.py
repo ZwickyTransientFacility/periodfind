@@ -1,8 +1,9 @@
+# from future.utils import iteritems
 import os
 from os.path import join as pjoin
-from setuptools import setup, find_packages
-from setuptools.extension import Extension
-from Cython.Build import cythonize
+from setuptools import setup
+from distutils.extension import Extension
+from Cython.Distutils import build_ext
 import numpy
 
 
@@ -51,29 +52,93 @@ def locate_cuda():
     return cudaconfig
 
 
+def customize_compiler_for_nvcc(self):
+    """Inject deep into distutils to customize how the dispatch
+    to gcc/nvcc works.
+
+    If you subclass UnixCCompiler, it's not trivial to get your subclass
+    injected in, and still have the right customizations (i.e.
+    distutils.sysconfig.customize_compiler) run on it. So instead of going
+    the OO route, I have this. Note, it's kindof like a wierd functional
+    subclassing going on.
+    """
+
+    # Tell the compiler it can processes .cu
+    self.src_extensions.append('.cu')
+
+    # Save references to the default compiler_so and _comple methods
+    default_compiler_so = self.compiler_so
+    super = self._compile
+
+    # Now redefine the _compile method. This gets executed for each
+    # object but distutils doesn't have the ability to change compilers
+    # based on source extension: we add it.
+    def _compile(obj, src, ext, cc_args, extra_postargs, pp_opts):
+        if os.path.splitext(src)[1] == '.cu':
+            # use the cuda for .cu files
+            self.set_executable('compiler_so', CUDA['nvcc'])
+            # use only a subset of the extra_postargs, which are 1-1
+            # translated from the extra_compile_args in the Extension class
+            postargs = extra_postargs['nvcc']
+        else:
+            postargs = extra_postargs['gcc']
+
+        super(obj, src, ext, cc_args, postargs, pp_opts)
+        # Reset the default compiler_so, which we might have changed for cuda
+        self.compiler_so = default_compiler_so
+
+    # Inject our redefined _compile method into the class
+    self._compile = _compile
+
+
+# Run the customize_compiler
+class custom_build_ext(build_ext):
+    def build_extensions(self):
+        customize_compiler_for_nvcc(self.compiler)
+        build_ext.build_extensions(self)
+
+
 CUDA = locate_cuda()
+
+# Obtain the numpy include directory. This logic works across numpy versions.
+try:
+    numpy_include = numpy.get_include()
+except AttributeError:
+    numpy_include = numpy.get_numpy_include()
 
 extensions = [
     Extension(
-        "periodfind.ce",
-        ["periodfind/ce.pyx"],
+        'periodfind.ce',
+
+        sources=['periodfind/cuda/ce.cu', 'periodfind/ce.pyx'],
         language='c++',
-        include_dirs=[numpy.get_include(), CUDA['include']],
-        library_dirs=[CUDA['lib64'], '.'],
-        libraries=['periodfind', 'cudart'],
-        runtime_library_dirs=[CUDA['lib64'], '.'],
-    ),
-    Extension(
-        "periodfind.test",
-        ["periodfind/test.pyx"],
-        language='c++',
+
+        libraries=['cudart'],
+        library_dirs=[CUDA['lib64']],
+        runtime_library_dirs=[CUDA['lib64']],
+        
+        include_dirs=[numpy_include, CUDA['include']],
+        
+        extra_compile_args={
+            'gcc': [],
+            'nvcc': [
+                '-arch=sm_61', '--ptxas-options=-v', '-c',
+                '--compiler-options', "'-fPIC'"
+            ]
+        },
     ),
 ]
 
 setup(
     name="periodfind",
-    packages=find_packages(),
-    package_data={'periodfind': ['./libperiodfind.so']},
-    include_package_data=True,
-    ext_modules=cythonize(extensions, language_level="3")
+    author='Ethan Jaszewski',
+    version='0.0.1',
+
+    packages=['periodfind'],
+
+    ext_modules=extensions,
+
+    cmdclass={'build_ext': custom_build_ext},
+
+    zip_safe=False
 )
