@@ -67,6 +67,20 @@ class ConditionalEntropy {
     size_t NumMagBins() const;
 
     /**
+     * Returns the amount of phase bin overlap in the histogram.
+     * 
+     * @return amount of phase bin overlap in histogram
+     */
+    size_t NumPhaseBinOverlap() const;
+
+    /**
+     * Returns the amount of magnitude bin overlap in the histogram.
+     * 
+     * @return amount of magnitude bin overlap in histogram
+     */
+    size_t NumMagBinOverlap() const;
+
+    /**
      * Returns the size of the phase bins in the histogram.
      * 
      * @return size of the phase bins

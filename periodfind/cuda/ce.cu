@@ -40,6 +40,14 @@ __host__ __device__ size_t ConditionalEntropy::NumMagBins() const {
     return num_mag_bins;
 }
 
+__host__ __device__ size_t ConditionalEntropy::NumPhaseBinOverlap() const {
+    return num_phase_overlap;
+}
+
+__host__ __device__ size_t ConditionalEntropy::NumMagBinOverlap() const {
+    return num_mag_overlap;
+}
+
 __host__ __device__ float ConditionalEntropy::PhaseBinSize() const {
     return phase_bin_size;
 }
@@ -131,16 +139,23 @@ __global__ void FoldBinKernel(const float* times,
         size_t phase_bin = h_params.PhaseBin(folded);
         size_t mag_bin = h_params.MagBin(mags[idx]);
 
-        // TODO: Add bin overlapping
-        atomicAdd(&sh_hist[h_params.BinIndex(phase_bin, mag_bin)], 1);
+        for (size_t i = 0; i < h_params.NumPhaseBinOverlap(); i++) {
+            for (size_t j = 0; j < h_params.NumMagBinOverlap(); j++) {
+                size_t idx = h_params.BinIndex((phase_bin + i) % h_params.NumPhaseBins(),
+                                               (mag_bin + j) % h_params.NumMagBins());
+                atomicAdd(&sh_hist[idx], 1);
+            }
+        }
     }
 
     __syncthreads();
 
+    size_t div = length * h_params.NumPhaseBinOverlap() * h_params.NumMagBinOverlap();
+    
     // Copy the block's histogram into global memory
     for (size_t i = threadIdx.x; i < h_params.NumBins(); i += blockDim.x) {
         block_hist[i] =
-            static_cast<float>(sh_hist[i]) / static_cast<float>(length);
+            static_cast<float>(sh_hist[i]) / static_cast<float>(div);
     }
 }
 

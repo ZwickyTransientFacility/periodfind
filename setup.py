@@ -106,6 +106,24 @@ try:
 except AttributeError:
     numpy_include = numpy.get_numpy_include()
 
+# Arguments for both NVCC and GCC
+compiler_flags = ['-std=c++11']
+gcc_only_flags = []
+nvcc_only_flags = ['--ptxas-options=-v', '-c',
+                   '--compiler-options', "'-fPIC'"]
+
+# Generate the gencode arguments
+compute_capabilities = [35, 37, 50, 52, 60, 61, 70, 75]
+cuda_arch_flags = [
+    f'-gencode=arch=compute_{cap},code=sm_{cap}' for cap in compute_capabilities
+]
+cuda_arch_flags.append('-gencode=arch=compute_{arch},code=compute_{arch}'.format(
+    arch=compute_capabilities[-1]))
+
+# Final Args
+gcc_flags = gcc_only_flags + compiler_flags
+nvcc_flags = nvcc_only_flags + compiler_flags + cuda_arch_flags
+
 extensions = [
     Extension(
         'periodfind.ce',
@@ -116,15 +134,12 @@ extensions = [
         libraries=['cudart'],
         library_dirs=[CUDA['lib64']],
         runtime_library_dirs=[CUDA['lib64']],
-        
+
         include_dirs=[numpy_include, CUDA['include']],
-        
+
         extra_compile_args={
-            'gcc': [],
-            'nvcc': [
-                '-arch=sm_61', '--ptxas-options=-v', '-c',
-                '--compiler-options', "'-fPIC'"
-            ]
+            'gcc': gcc_flags,
+            'nvcc': nvcc_flags,
         },
     ),
 ]

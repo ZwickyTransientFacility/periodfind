@@ -1,7 +1,7 @@
 #cython: language_level=3
 
 import numpy as np
-from periodfind import Statistics
+from periodfind import Statistics, Periodogram
 
 cimport numpy as np
 from libc.stddef cimport size_t
@@ -39,8 +39,8 @@ cdef class ConditionalEntropy:
     def __cinit__(self,
                   n_phase=10,
                   n_mag=10,
-                  n_phase_overlap=0,
-                  n_mag_overlap=0):
+                  n_phase_overlap=1,
+                  n_mag_overlap=1):
         self.ce = new CppConditionalEntropy(
             n_phase,
             n_mag,
@@ -69,27 +69,40 @@ cdef class ConditionalEntropy:
              list mags,
              np.ndarray[ndim=1, dtype=np.float32_t] periods,
              np.ndarray[ndim=1, dtype=np.float32_t] period_dts,
-             output="stats"):
+             output="stats",
+             normalize=True):
         
         # Make sure the number of times and mags matches 
         if len(times) != len(mags):
             return np.zeros([0, 0, 0], dtype=np.float32)
         
-        cdef np.ndarray[ndim=1, dtype=np.float32_t] time
+        cdef np.ndarray[ndim=1, dtype=np.float32_t] time_arr
         cdef vector[float*] times_ptrs
         cdef vector[size_t] times_lens
         for time_obj in times:
-            time = time_obj
-            times_ptrs.push_back(&time[0])
-            times_lens.push_back(len(time))
+            time_arr = time_obj
+            times_ptrs.push_back(&time_arr[0])
+            times_lens.push_back(len(time_arr))
 
-        cdef np.ndarray[ndim=1, dtype=np.float32_t] mag
+        mags_use = []
+        if normalize:
+            for mag in mags:
+                min_v = np.min(mag)
+                max_v = np.max(mag)
+                scaled = ((mag - min_v) / (max_v - min_v)) * 0.999 + 5e-4
+                mags_use.append(scaled)
+        else:
+            mags_use = mags
+
+        print(mags_use)
+
+        cdef np.ndarray[ndim=1, dtype=np.float32_t] mag_arr
         cdef vector[float*] mags_ptrs
         cdef vector[size_t] mags_lens
-        for mag_obj in mags:
-            mag = mag_obj
-            mags_ptrs.push_back(&mag[0])
-            mags_lens.push_back(len(mag))
+        for mag_obj in mags_use:
+            mag_arr = mag_obj
+            mags_ptrs.push_back(&mag_arr[0])
+            mags_lens.push_back(len(mag_arr))
 
         # Make sure the individual lengths match
         if any(t != m for t, m in zip(times_lens, mags_lens)):
@@ -133,5 +146,8 @@ cdef class ConditionalEntropy:
                 all_stats.append(stats)
             
             return all_stats
+        elif output == 'periodogram':
+            return [Periodogram(data, [periods, period_dts])
+                    for data in ces_ndarr]
         else:
             raise NotImplementedError('Only "stats" output is implemented')
