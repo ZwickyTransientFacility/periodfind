@@ -109,8 +109,7 @@ except AttributeError:
 # Arguments for both NVCC and GCC
 compiler_flags = ['-std=c++11']
 gcc_only_flags = []
-nvcc_only_flags = ['--ptxas-options=-v', '-c',
-                   '--compiler-options', "'-fPIC'"]
+nvcc_only_flags = ['-c', '--compiler-options', "'-fPIC'"]
 
 # Generate the gencode arguments
 compute_capabilities = [35, 37, 50, 52, 60, 61, 70, 75]
@@ -129,6 +128,23 @@ extensions = [
         'periodfind.ce',
 
         sources=['periodfind/cuda/ce.cu', 'periodfind/ce.pyx'],
+        language='c++',
+
+        libraries=['cudart'],
+        library_dirs=[CUDA['lib64']],
+        runtime_library_dirs=[CUDA['lib64']],
+
+        include_dirs=[numpy_include, CUDA['include']],
+
+        extra_compile_args={
+            'gcc': gcc_flags,
+            'nvcc': nvcc_flags,
+        },
+    ),
+    Extension(
+        'periodfind.aov',
+
+        sources=['periodfind/cuda/aov.cu', 'periodfind/aov.pyx'],
         language='c++',
 
         libraries=['cudart'],

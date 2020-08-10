@@ -10,42 +10,34 @@ from libcpp.vector cimport vector
 # Include numpy <-> c array interop
 np.import_array()
 
-cdef extern from "./cuda/ce.h":
-    cdef cppclass CppConditionalEntropy "ConditionalEntropy":
-        CppConditionalEntropy(size_t num_phase,
-                        size_t num_mag,
-                        size_t num_phase_overlap,
-                        size_t num_mag_overlap)
+cdef extern from "./cuda/aov.h":
+    cdef cppclass CppAOV "AOV":
+        CppAOV(size_t num_phase,
+               size_t num_phase_overlap)
         
-        float* CalcCEVals(const float* times,
-                          const float* mags,
-                          const size_t length,
-                          const float* periods,
-                          const float* period_dts,
-                          const size_t num_periods,
-                          const size_t num_p_dts) const
+        float* CalcAOVVals(const float* times,
+                           const float* mags,
+                           const size_t length,
+                           const float* periods,
+                           const float* period_dts,
+                           const size_t num_periods,
+                           const size_t num_p_dts) const
         
-        float* CalcCEValsBatched(const vector[float*]& times,
-                                 const vector[float*]& mags,
-                                 const vector[size_t]& lengths,
-                                 const float* periods,
-                                 const float* period_dts,
-                                 const size_t num_periods,
-                                 const size_t num_p_dts) const;
+        float* CalcAOVValsBatched(const vector[float*]& times,
+                                  const vector[float*]& mags,
+                                  const vector[size_t]& lengths,
+                                  const float* periods,
+                                  const float* period_dts,
+                                  const size_t num_periods,
+                                  const size_t num_p_dts) const;
 
-cdef class ConditionalEntropy:
-    cdef CppConditionalEntropy* ce
+cdef class AOV:
+    cdef CppAOV* aov
 
     def __cinit__(self,
                   n_phase=10,
-                  n_mag=10,
-                  n_phase_overlap=1,
-                  n_mag_overlap=1):
-        self.ce = new CppConditionalEntropy(
-            n_phase,
-            n_mag,
-            n_phase_overlap,
-            n_mag_overlap)
+                  n_phase_overlap=1):
+        self.aov = new CppAOV(n_phase, n_phase_overlap)
     
     def calc_one(self,
                  np.ndarray[ndim=1, dtype=np.float32_t] times not None,
@@ -55,13 +47,13 @@ cdef class ConditionalEntropy:
         d_len = len(times)
         n_per = len(periods)
         n_pdt = len(period_dts)
-        cdef float* ces = \
-            self.ce.CalcCEVals(&times[0], &mags[0], d_len, &periods[0], &period_dts[0], n_per, n_pdt)
+        cdef float* aovs = \
+            self.aov.CalcAOVVals(&times[0], &mags[0], d_len, &periods[0], &period_dts[0], n_per, n_pdt)
         cdef np.npy_intp dim[2]
         dim[0] = n_per
         dim[1] = n_pdt
         cdef np.ndarray[ndim=2, dtype=np.float32_t] ces_ndarr = \
-            np.PyArray_SimpleNewFromData(2, dim, np.NPY_FLOAT, ces)
+            np.PyArray_SimpleNewFromData(2, dim, np.NPY_FLOAT, aovs)
         return ces_ndarr
 
     def calc(self,
@@ -70,7 +62,7 @@ cdef class ConditionalEntropy:
              np.ndarray[ndim=1, dtype=np.float32_t] periods,
              np.ndarray[ndim=1, dtype=np.float32_t] period_dts,
              output="stats",
-             normalize=True):
+             normalize=False):
         
         # Make sure the number of times and mags matches 
         if len(times) != len(mags):
@@ -109,7 +101,7 @@ cdef class ConditionalEntropy:
         n_per = len(periods)
         n_pdt = len(period_dts)
 
-        cdef float* ces = self.ce.CalcCEValsBatched(
+        cdef float* aovs = self.aov.CalcAOVValsBatched(
             times_ptrs, mags_ptrs, times_lens,
             &periods[0], &period_dts[0], n_per, n_pdt,
         )
@@ -119,25 +111,25 @@ cdef class ConditionalEntropy:
         dim[1] = n_per
         dim[2] = n_pdt
 
-        cdef np.ndarray[ndim=3, dtype=np.float32_t] ces_ndarr = \
-            np.PyArray_SimpleNewFromData(3, dim, np.NPY_FLOAT, ces)
+        cdef np.ndarray[ndim=3, dtype=np.float32_t] aovs_ndarr = \
+            np.PyArray_SimpleNewFromData(3, dim, np.NPY_FLOAT, aovs)
         
         if output == 'stats':
             axis = (1, 2)
-            means = np.mean(ces_ndarr, axis=axis, dtype=np.float64)
-            stds = np.std(ces_ndarr, axis=axis, dtype=np.float64)
+            means = np.mean(aovs_ndarr, axis=axis, dtype=np.float64)
+            stds = np.std(aovs_ndarr, axis=axis, dtype=np.float64)
 
             all_stats = []
             for i in range(len(times)):
                 argmin = np.unravel_index(
-                    np.argmin(ces_ndarr[i]),
-                    ces_ndarr[i].shape,
+                    np.argmin(aovs_ndarr[i]),
+                    aovs_ndarr[i].shape,
                 )
 
                 stats = Statistics(
                     [periods[argmin[0]], period_dts[argmin[1]]],
                     means[i],
-                    ces_ndarr[i][argmin],
+                    aovs_ndarr[i][argmin],
                     stds[i],
                 )
 
@@ -146,6 +138,6 @@ cdef class ConditionalEntropy:
             return all_stats
         elif output == 'periodogram':
             return [Periodogram(data, [periods, period_dts])
-                    for data in ces_ndarr]
+                    for data in aovs_ndarr]
         else:
             raise NotImplementedError('Only "stats" output is implemented')

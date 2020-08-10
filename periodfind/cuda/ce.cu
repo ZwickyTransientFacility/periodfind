@@ -5,10 +5,8 @@
 #include "cuda_runtime.h"
 #include "math.h"
 
-#include <cstdio>
-
 //
-// Simple Histogram Function Definitions
+// Simple ConditionalEntropy Function Definitions
 //
 
 ConditionalEntropy::ConditionalEntropy(size_t n_phase,
@@ -397,13 +395,6 @@ float* ConditionalEntropy::CalcCEVals(const float* times,
     cudaFree(dev_period_dts);
 
     return ces;
-}
-
-__global__ void pk(float* data, int size) {
-    for (int i = 0; i < size; i++) {
-        printf("%f ", data[i]);
-    }
-    printf("\n");
 }
 
 float* ConditionalEntropy::CalcCEValsBatched(const std::vector<float*>& times,

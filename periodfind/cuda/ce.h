@@ -165,7 +165,7 @@ class ConditionalEntropy {
      * index, then time derivative index (i.e. (period 0, td 0), (period 0, td
      * 1), ... (period 1, td 0), (period 1, td 1) etc.) which is returned.
      *
-     * Arguments should all be device pointers.
+     * Arguments should all be host pointers.
      *
      * @param times light curve datapoint times
      * @param mags light curve datapoint magnitudes
@@ -219,7 +219,7 @@ class ConditionalEntropy {
     float* CalcCEFromHists(const float* hists, const size_t num_hists) const;
 
     /**
-     * Computes the conditional entropy for the input light curve.
+     * Computes the conditional entropy values for the input light curve.
      *
      * Computes the conditional entropy values for the input light curve (times
      * and mags). The magnitudes are assumed to have been scaled into a [0, 1)
@@ -249,7 +249,7 @@ class ConditionalEntropy {
                       const size_t num_p_dts) const;
 
     /**
-     * Computes the conditional entropy for all input light curves.
+     * Computes the conditional entropy values for all input light curves.
      *
      * Computes the conditional entropy values for each input light curve (times
      * and mags). The magnitudes are assumed to have been scaled into a [0, 1)

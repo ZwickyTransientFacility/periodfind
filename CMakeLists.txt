@@ -5,15 +5,17 @@ include(GNUInstallDirs)
 project(periodfind LANGUAGES CXX CUDA)
 
 add_library(periodfind SHARED
-            periodfind/cuda/ce.cu)
+            periodfind/cuda/ce.cu
+            periodfind/cuda/aov.cu)
+
+file(GLOB_RECURSE HEADER_FILES "periodfind/cuda/*.h")
 
 target_compile_features(periodfind PUBLIC cxx_std_14)
 
 set_target_properties(periodfind
                       PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
-set_target_properties(periodfind PROPERTIES PUBLIC_HEADER
-                      periodfind/cuda/ce.h)
+set_target_properties(periodfind PROPERTIES PUBLIC_HEADER "${HEADER_FILES}")
 
 install(TARGETS periodfind
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
