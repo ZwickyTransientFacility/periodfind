@@ -134,18 +134,25 @@ cdef class ConditionalEntropy:
                     ces_ndarr[i].shape,
                 )
 
+                argmax = np.unravel_index(
+                    np.argmax(ces_ndarr[i]),
+                    ces_ndarr[i].shape,
+                )
+
                 stats = Statistics(
                     [periods[argmin[0]], period_dts[argmin[1]]],
                     means[i],
                     ces_ndarr[i][argmin],
+                    ces_ndarr[i][argmax],
                     stds[i],
+                    False,
                 )
 
                 all_stats.append(stats)
             
             return all_stats
         elif output == 'periodogram':
-            return [Periodogram(data, [periods, period_dts])
+            return [Periodogram(data, [periods, period_dts], False)
                     for data in ces_ndarr]
         else:
             raise NotImplementedError('Only "stats" output is implemented')

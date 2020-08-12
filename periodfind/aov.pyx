@@ -126,18 +126,25 @@ cdef class AOV:
                     aovs_ndarr[i].shape,
                 )
 
+                argmax = np.unravel_index(
+                    np.argmax(aovs_ndarr[i]),
+                    aovs_ndarr[i].shape,
+                )
+
                 stats = Statistics(
-                    [periods[argmin[0]], period_dts[argmin[1]]],
+                    [periods[argmax[0]], period_dts[argmax[1]]],
                     means[i],
                     aovs_ndarr[i][argmin],
+                    aovs_ndarr[i][argmax],
                     stds[i],
+                    True,
                 )
 
                 all_stats.append(stats)
             
             return all_stats
         elif output == 'periodogram':
-            return [Periodogram(data, [periods, period_dts])
+            return [Periodogram(data, [periods, period_dts], True)
                     for data in aovs_ndarr]
         else:
             raise NotImplementedError('Only "stats" output is implemented')
