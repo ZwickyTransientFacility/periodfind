@@ -33,3 +33,17 @@ make
 ```
 
 Finally, install the package by running `make install` (may require super-user priveleges), which will install the library in `/usr/local/lib/` and the headers in `/usr/local/include/periodfind/` by default (on Linux, location will be different on other operating systems).
+
+## Compatibility
+
+This package has been tested only on Linux hosts running CUDA 10.2 and CUDA 11. Other operating systems and versions of CUDA may work, but it is not guaranteed.
+
+## Acknowledgements
+
+Funding for this project was provided by the Larson Scholar Fellowship as part of the SURF program.
+
+## License
+
+This package is licensed under the BSD 3-clause license. The copyright holder is the California Institute of Technology (Caltech).
+
+`setup.py` and `MANIFEST.in` are based off of an example project at <https://github.com/rmcgibbo/npcuda-example/>, licensed under the BSD 2-clause license.

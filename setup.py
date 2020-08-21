@@ -1,11 +1,9 @@
-# from future.utils import iteritems
 import os
 from os.path import join as pjoin
 from setuptools import setup
 from distutils.extension import Extension
 from Cython.Distutils import build_ext
 import numpy
-
 
 def find_in_path(name, path):
     """Find a file in a search path"""
@@ -36,14 +34,18 @@ def locate_cuda():
         # Otherwise, search the PATH for NVCC
         nvcc = find_in_path('nvcc', os.environ['PATH'])
         if nvcc is None:
-            raise EnvironmentError('The nvcc binary could not be '
-                                   'located in your $PATH. Either add it to your path, '
-                                   'or set $CUDAHOME')
+            raise EnvironmentError(
+                'The nvcc binary could not be '
+                'located in your $PATH. Either add it to your path, '
+                'or set $CUDAHOME')
         home = os.path.dirname(os.path.dirname(nvcc))
 
-    cudaconfig = {'home': home, 'nvcc': nvcc,
-                  'include': pjoin(home, 'include'),
-                  'lib64': pjoin(home, 'lib64')}
+    cudaconfig = {
+        'home': home,
+        'nvcc': nvcc,
+        'include': pjoin(home, 'include'),
+        'lib64': pjoin(home, 'lib64')
+    }
     for k, v in iter(cudaconfig.items()):
         if not os.path.exists(v):
             raise EnvironmentError('The CUDA %s path could not be '
@@ -114,10 +116,12 @@ nvcc_only_flags = ['-c', '--compiler-options', "'-fPIC'"]
 # Generate the gencode arguments
 compute_capabilities = [35, 37, 50, 52, 60, 61, 70, 75]
 cuda_arch_flags = [
-    f'-gencode=arch=compute_{cap},code=sm_{cap}' for cap in compute_capabilities
+    f'-gencode=arch=compute_{cap},code=sm_{cap}'
+    for cap in compute_capabilities
 ]
-cuda_arch_flags.append('-gencode=arch=compute_{arch},code=compute_{arch}'.format(
-    arch=compute_capabilities[-1]))
+cuda_arch_flags.append(
+    '-gencode=arch=compute_{arch},code=compute_{arch}'.format(
+        arch=compute_capabilities[-1]))
 
 # Final Args
 gcc_flags = gcc_only_flags + compiler_flags
@@ -126,16 +130,12 @@ nvcc_flags = nvcc_only_flags + compiler_flags + cuda_arch_flags
 extensions = [
     Extension(
         'periodfind.ce',
-
         sources=['periodfind/cuda/ce.cu', 'periodfind/ce.pyx'],
         language='c++',
-
         libraries=['cudart'],
         library_dirs=[CUDA['lib64']],
         runtime_library_dirs=[CUDA['lib64']],
-
         include_dirs=[numpy_include, CUDA['include']],
-
         extra_compile_args={
             'gcc': gcc_flags,
             'nvcc': nvcc_flags,
@@ -143,16 +143,12 @@ extensions = [
     ),
     Extension(
         'periodfind.aov',
-
         sources=['periodfind/cuda/aov.cu', 'periodfind/aov.pyx'],
         language='c++',
-
         libraries=['cudart'],
         library_dirs=[CUDA['lib64']],
         runtime_library_dirs=[CUDA['lib64']],
-
         include_dirs=[numpy_include, CUDA['include']],
-
         extra_compile_args={
             'gcc': gcc_flags,
             'nvcc': nvcc_flags,
@@ -160,16 +156,12 @@ extensions = [
     ),
     Extension(
         'periodfind.ls',
-
         sources=['periodfind/cuda/ls.cu', 'periodfind/ls.pyx'],
         language='c++',
-
         libraries=['cudart'],
         library_dirs=[CUDA['lib64']],
         runtime_library_dirs=[CUDA['lib64']],
-
         include_dirs=[numpy_include, CUDA['include']],
-
         extra_compile_args={
             'gcc': gcc_flags,
             'nvcc': nvcc_flags,
@@ -177,16 +169,31 @@ extensions = [
     ),
 ]
 
-setup(
-    name="periodfind",
-    author='Ethan Jaszewski',
-    version='0.0.1',
-
-    packages=['periodfind'],
-
-    ext_modules=extensions,
-
-    cmdclass={'build_ext': custom_build_ext},
-
-    zip_safe=False
-)
+setup(name="periodfind",
+      version='0.0.2',
+      description='GPU-accelerated period finding utilities',
+      url='https://github.com/ejaszewski/periodfind',
+      author='Ethan Jaszewski',
+      author_email='ethanjaszewski@yahoo.com',
+      classifiers=[
+          'License :: OSI Approved :: BSD License',
+          'Operating System :: POSIX :: Linux',
+          'Programming Language :: C++',
+          'Programming Language :: Cython',
+          'Programming Language :: Python :: 3',
+          'Intended Audience :: Science/Research',
+          'Topic :: Scientific/Engineering',
+          'Topic :: Scientific/Engineering :: Astronomy',
+          'Topic :: Software Development :: Libraries :: Python Modules',
+          'Environment :: GPU :: NVIDIA CUDA',
+      ],
+      python_requires='>=3.6',
+      install_requires=[
+          'cython',
+          'numpy',
+      ],
+      keywords=['astronomy'],
+      packages=['periodfind'],
+      ext_modules=extensions,
+      cmdclass={'build_ext': custom_build_ext},
+      zip_safe=False)

@@ -1,5 +1,13 @@
 import numpy as np
 
+# Copyright 2020 California Institute of Technology. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+# Author: Ethan Jaszewski
+
+"""
+Provides an API for analyzing light curves using periodograms.
+"""
 
 class Statistics:
     """Stores statistics about a single set of parameters.
@@ -59,10 +67,15 @@ class Statistics:
 
     significance : float
         Significance statistic, computed according to the significance_type
-
     """
-
-    def __init__(self, params, value, mean, std, median, mad, significance_type='stdmean'):
+    def __init__(self,
+                 params,
+                 value,
+                 mean,
+                 std,
+                 median,
+                 mad,
+                 significance_type='stdmean'):
         self.params = params
         self.value = value
         self.mean = mean
@@ -78,12 +91,19 @@ class Statistics:
         elif self.significance_type == 'madmedian':
             return abs(self.value - self.median) / self.mad
         else:
-            raise NotImplementedError('Statistic '
-                                      + self.significance_type
-                                      + ' not implemented')
+            raise NotImplementedError('Statistic ' + self.significance_type +
+                                      ' not implemented')
 
     @staticmethod
-    def statistics_from_data(data, params, use_max, mean=None, std=None, median=None, mad=None, n=1, significance_type='stdmean'):
+    def statistics_from_data(data,
+                             params,
+                             use_max,
+                             mean=None,
+                             std=None,
+                             median=None,
+                             mad=None,
+                             n=1,
+                             significance_type='stdmean'):
         """Constructs statistics objects from a periodogram.
 
         Parameters
@@ -116,6 +136,7 @@ class Statistics:
         stats : `Statistics` or list of `Statistics`
             Statistics for the top `n` parameters
         """
+
         # Find best parameters
         if not use_max:
             partition = np.argpartition(data, n)[:n]
@@ -147,8 +168,7 @@ class Statistics:
                     median,
                     mad,
                     significance_type,
-                )
-            )
+                ))
 
         if n == 1:
             return best[0]
@@ -207,7 +227,6 @@ class Periodogram:
     Computes parameters on demand, and does not cache them, so statistics
     should be stored if necessary.
     """
-
     def __init__(self, periodogram, params, use_max):
         self.use_max = use_max
         self.data = periodogram
@@ -247,5 +266,4 @@ class Periodogram:
             median=self.median,
             mad=self.mad,
             n=n,
-            significance_type=significance_type
-        )
+            significance_type=significance_type)

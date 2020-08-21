@@ -1,5 +1,15 @@
 #cython: language_level=3
 
+# Copyright 2020 California Institute of Technology. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+# Author: Ethan Jaszewski
+
+"""
+Provides an interface for analyzing light curves using Lomb-Scargle
+periodograms.
+"""
+
 import numpy as np
 from periodfind import Statistics, Periodogram
 

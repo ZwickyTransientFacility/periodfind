@@ -1,3 +1,8 @@
+// Copyright 2020 California Institute of Technology. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+// Author: Ethan Jaszewski
+
 #ifndef __PF_CE_H__
 #define __PF_CE_H__
 
