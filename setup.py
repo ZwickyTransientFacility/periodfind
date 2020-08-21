@@ -158,6 +158,23 @@ extensions = [
             'nvcc': nvcc_flags,
         },
     ),
+    Extension(
+        'periodfind.ls',
+
+        sources=['periodfind/cuda/ls.cu', 'periodfind/ls.pyx'],
+        language='c++',
+
+        libraries=['cudart'],
+        library_dirs=[CUDA['lib64']],
+        runtime_library_dirs=[CUDA['lib64']],
+
+        include_dirs=[numpy_include, CUDA['include']],
+
+        extra_compile_args={
+            'gcc': gcc_flags,
+            'nvcc': nvcc_flags,
+        },
+    ),
 ]
 
 setup(

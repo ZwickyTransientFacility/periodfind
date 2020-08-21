@@ -195,7 +195,7 @@ AOVData* AOV::FoldAndBin(const float* times,
     cudaMemcpy(dev_mags, mags, data_bytes, cudaMemcpyHostToDevice);
     cudaMemcpy(dev_periods, periods, num_periods * sizeof(float),
                          cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_periods, period_dts, num_p_dts * sizeof(float),
+    cudaMemcpy(dev_period_dts, period_dts, num_p_dts * sizeof(float),
                          cudaMemcpyHostToDevice);
 
     AOVData* dev_hists =
@@ -289,7 +289,7 @@ float* AOV::CalcAOVVals(const float* times,
     cudaMemcpy(dev_mags, mags, data_bytes, cudaMemcpyHostToDevice);
     cudaMemcpy(dev_periods, periods, num_periods * sizeof(float),
                          cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_periods, period_dts, num_p_dts * sizeof(float),
+    cudaMemcpy(dev_period_dts, period_dts, num_p_dts * sizeof(float),
                          cudaMemcpyHostToDevice);
 
     AOVData* dev_hists =

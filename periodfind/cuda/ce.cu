@@ -370,7 +370,7 @@ float* ConditionalEntropy::CalcCEVals(const float* times,
     cudaMemcpy(dev_mags, mags, data_bytes, cudaMemcpyHostToDevice);
     cudaMemcpy(dev_periods, periods, num_periods * sizeof(float),
                          cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_periods, period_dts, num_p_dts * sizeof(float),
+    cudaMemcpy(dev_period_dts, period_dts, num_p_dts * sizeof(float),
                          cudaMemcpyHostToDevice);
 
     float* dev_hists =
@@ -421,7 +421,7 @@ float* ConditionalEntropy::CalcCEValsBatched(const std::vector<float*>& times,
     cudaMalloc(&dev_period_dts, num_p_dts * sizeof(float));
     cudaMemcpy(dev_periods, periods, num_periods * sizeof(float),
                          cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_periods, period_dts, num_p_dts * sizeof(float),
+    cudaMemcpy(dev_period_dts, period_dts, num_p_dts * sizeof(float),
                          cudaMemcpyHostToDevice);
 
     // Intermediate histogram memory

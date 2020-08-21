@@ -1,5 +1,10 @@
 #cython: language_level=3
 
+"""
+Provides an interface for analyzing light curves using the Conditional Entropy
+algorithm.
+"""
+
 import numpy as np
 from periodfind import Statistics, Periodogram
 
@@ -10,6 +15,7 @@ from libcpp.vector cimport vector
 # Include numpy <-> c array interop
 np.import_array()
 
+# Define the C++ CE class so we can use it
 cdef extern from "./cuda/ce.h":
     cdef cppclass CppConditionalEntropy "ConditionalEntropy":
         CppConditionalEntropy(size_t num_phase,
@@ -34,35 +40,45 @@ cdef extern from "./cuda/ce.h":
                                  const size_t num_p_dts) const;
 
 cdef class ConditionalEntropy:
+    """Conditional Entropy based light curve analysis.
+
+    Attempts to determine the period of a light curve by folding the light
+    curve sample times over each trial period, then binning the folded times
+    and their corresponding magnitudes into a 2-D histogram. The output
+    periodogram consists of the Conditional Entropy values of these 2-D
+    histograms.
+
+    Parameters
+    ----------
+    n_phase : int, default=10
+        The number of phase bins in the histogram
+    
+    n_mag : int, default=10
+        The number of magnitude bins in the histogram
+    
+    phase_bin_extent : int, default=1
+        The effective width (in number of bins) of a given phase bin.
+        Extends a bin by duplicating entries to adjacent bins, wrapping
+        if necessary. Tends to smooth the periodogram curve.
+
+    mag_bin_extent : int, default=1
+        The effective width (in number of bins) of a given magnitude bin.
+        Extends a bin by duplicating entries to adjacent bins, wrapping
+        if necessary. Tends to smooth the periodogram curve.
+    """
+
     cdef CppConditionalEntropy* ce
 
     def __cinit__(self,
                   n_phase=10,
                   n_mag=10,
-                  n_phase_overlap=1,
-                  n_mag_overlap=1):
+                  phase_bin_extent=1,
+                  mag_bin_extent=1):
         self.ce = new CppConditionalEntropy(
             n_phase,
             n_mag,
-            n_phase_overlap,
-            n_mag_overlap)
-    
-    def calc_one(self,
-                 np.ndarray[ndim=1, dtype=np.float32_t] times not None,
-                 np.ndarray[ndim=1, dtype=np.float32_t] mags not None,
-                 np.ndarray[ndim=1, dtype=np.float32_t] periods not None,
-                 np.ndarray[ndim=1, dtype=np.float32_t] period_dts not None):
-        d_len = len(times)
-        n_per = len(periods)
-        n_pdt = len(period_dts)
-        cdef float* ces = \
-            self.ce.CalcCEVals(&times[0], &mags[0], d_len, &periods[0], &period_dts[0], n_per, n_pdt)
-        cdef np.npy_intp dim[2]
-        dim[0] = n_per
-        dim[1] = n_pdt
-        cdef np.ndarray[ndim=2, dtype=np.float32_t] ces_ndarr = \
-            np.PyArray_SimpleNewFromData(2, dim, np.NPY_FLOAT, ces)
-        return ces_ndarr
+            phase_bin_extent,
+            mag_bin_extent)
 
     def calc(self,
              list times,
@@ -70,7 +86,62 @@ cdef class ConditionalEntropy:
              np.ndarray[ndim=1, dtype=np.float32_t] periods,
              np.ndarray[ndim=1, dtype=np.float32_t] period_dts,
              output="stats",
-             normalize=True):
+             normalize=True,
+             n_stats=1,
+             significance_type='stdmean'):
+        """Runs Conditional Entropy calculations on a list of light curves.
+
+        Computes a Conditional Entropy periodogram for each of the input light
+        curves, then returns either statistics or a full periodogram, depending
+        on what is requested.
+
+        Parameters
+        ----------
+        times : list of ndarray
+            List of light curve times.
+        
+        mags : list of ndarray
+            List of light curve magnitudes.
+        
+        periods : ndarray
+            Array of trial periods
+        
+        period_dts : ndarray
+            Array of trial period time derivatives
+        
+        output : {'stats', 'periodogram'}, default='stats'
+            Type of output that should be returned
+        
+        normalize : bool, default=True
+            Whether to normalize the light curve magnitudes
+
+        n_stats : int, default=1
+            Number of output `Statistics` to return if `output='stats'`
+        
+        significance_type : {'stdmean', 'madmedian'}, default='stdmean'
+            Specifies the significance statistic that should be used. See the
+            documentation for the `Statistics` class for more information.
+            Used only if `output='stats'`.
+        
+        Returns
+        -------
+        data : list of Statistics or list of Periodogram
+            If `output='stats'`, then returns a list of `Statistics` objects,
+            one for each light curve.
+
+            If `output='periodogram'`, then returns a list of `Periodogram`
+            objects, one for each light curve.
+        
+        Notes
+        -----
+        The times and magnitudes arrays must be given such that the pair
+        `(times[i], magnitudes[i])` gives the `i`th light curve. As such,
+        `times[i]` and `magnitudes[i]` must have the same length for all `i`.
+        
+        Normalization is required for the underlying Conditional Entropy
+        implementation to work, so if the data is not already in the interval
+        (0, 1), then `normalize=True` should be used.
+        """
         
         # Make sure the number of times and mags matches 
         if len(times) != len(mags):
@@ -123,29 +194,13 @@ cdef class ConditionalEntropy:
             np.PyArray_SimpleNewFromData(3, dim, np.NPY_FLOAT, ces)
         
         if output == 'stats':
-            axis = (1, 2)
-            means = np.mean(ces_ndarr, axis=axis, dtype=np.float64)
-            stds = np.std(ces_ndarr, axis=axis, dtype=np.float64)
-
             all_stats = []
             for i in range(len(times)):
-                argmin = np.unravel_index(
-                    np.argmin(ces_ndarr[i]),
-                    ces_ndarr[i].shape,
-                )
-
-                argmax = np.unravel_index(
-                    np.argmax(ces_ndarr[i]),
-                    ces_ndarr[i].shape,
-                )
-
-                stats = Statistics(
-                    [periods[argmin[0]], period_dts[argmin[1]]],
-                    means[i],
-                    ces_ndarr[i][argmin],
-                    ces_ndarr[i][argmax],
-                    stds[i],
-                    False,
+                stats = Statistics.statistics_from_data(
+                    ces_ndarr,
+                    [periods, period_dts],
+                    n=n_stats,
+                    significance_type=significance_type,
                 )
 
                 all_stats.append(stats)

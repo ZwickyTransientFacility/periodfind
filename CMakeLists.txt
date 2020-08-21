@@ -6,7 +6,8 @@ project(periodfind LANGUAGES CXX CUDA)
 
 add_library(periodfind SHARED
             periodfind/cuda/ce.cu
-            periodfind/cuda/aov.cu)
+            periodfind/cuda/aov.cu
+            periodfind/cuda/ls.cu)
 
 file(GLOB_RECURSE HEADER_FILES "periodfind/cuda/*.h")
 

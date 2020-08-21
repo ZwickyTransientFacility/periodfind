@@ -10,53 +10,37 @@ from libcpp.vector cimport vector
 # Include numpy <-> c array interop
 np.import_array()
 
-cdef extern from "./cuda/aov.h":
-    cdef cppclass CppAOV "AOV":
-        CppAOV(size_t num_phase,
-               size_t num_phase_overlap)
+cdef extern from "./cuda/ls.h":
+    cdef cppclass CppLombScargle "LombScargle":
+        CppLombScargle()
         
-        float* CalcAOVVals(const float* times,
-                           const float* mags,
-                           const size_t length,
-                           const float* periods,
-                           const float* period_dts,
-                           const size_t num_periods,
-                           const size_t num_p_dts) const
+        float* CalcLS(const float* times,
+                      const float* mags,
+                      const size_t length,
+                      const float* periods,
+                      const float* period_dts,
+                      const size_t num_periods,
+                      const size_t num_p_dts) const
         
-        float* CalcAOVValsBatched(const vector[float*]& times,
-                                  const vector[float*]& mags,
-                                  const vector[size_t]& lengths,
-                                  const float* periods,
-                                  const float* period_dts,
-                                  const size_t num_periods,
-                                  const size_t num_p_dts) const;
+        float* CalcLSBatched(const vector[float*]& times,
+                             const vector[float*]& mags,
+                             const vector[size_t]& lengths,
+                             const float* periods,
+                             const float* period_dts,
+                             const size_t num_periods,
+                             const size_t num_p_dts) const;
 
-cdef class AOV:
-    """Analysis-of-Variance based light curve analysis.
+cdef class LombScargle:
+    """Lomb-Scargle periodogram light curve analysis.
 
-    Attempts to determine the period of a light curve by folding the light
-    curve sample times over each trial period, then binning the folded times
-    into a histogram, computing a statistics for each bin. The output
-    periodogram consists of a variance-based statistic computed for each
-    trial period and period derivative.
-
-    Parameters
-    ----------
-    n_phase : int, default=10
-        The number of phase bins in the histogram
-    
-    phase_bin_extent : int, default=1
-        The effective width (in number of bins) of a given phase bin.
-        Extends a bin by duplicating entries to adjacent bins, wrapping
-        if necessary. Tends to smooth the periodogram curve.
+    Attempts to determine the period of a light curve by computing a Lomb-
+    Scargle periodogram for the input light curve.
     """
 
-    cdef CppAOV* aov
+    cdef CppLombScargle* ls
 
-    def __cinit__(self,
-                  n_phase=10,
-                  phase_bin_extent=1):
-        self.aov = new CppAOV(n_phase, phase_bin_extent)
+    def __cinit__(self):
+        self.ls = new CppLombScargle()
 
     def calc(self,
              list times,
@@ -67,9 +51,9 @@ cdef class AOV:
              normalize=False,
              n_stats=1,
              significance_type='stdmean'):
-        """Runs Analysis-of-Variance calculations on a list of light curves.
+        """Runs Lomb-Scargle calculations on a list of light curves.
 
-        Computes an Analysis-of-Variance periodogram for each of the input
+        Computes an Lomb-Scargle periodogram for each of the input
         light curves, then returns either statistics or a full periodogram,
         depending on what is requested.
 
@@ -92,7 +76,7 @@ cdef class AOV:
         
         normalize : bool, default=False
             Whether to normalize the light curve magnitudes
-        
+
         n_stats : int, default=1
             Number of output `Statistics` to return if `output='stats'`
         
@@ -116,11 +100,11 @@ cdef class AOV:
         `(times[i], magnitudes[i])` gives the `i`th light curve. As such,
         `times[i]` and `magnitudes[i]` must have the same length for all `i`.
         
-        Although normalization is not required for the Analysis-of-Variance
+        Although normalization is not required for the Lomb-Scargle
         calculation, it can help reduce floating point error, so it is
         recommended for light curves with large magnitude values.
         """
-
+        
         # Make sure the number of times and mags matches 
         if len(times) != len(mags):
             return np.zeros([0, 0, 0], dtype=np.float32)
@@ -158,7 +142,7 @@ cdef class AOV:
         n_per = len(periods)
         n_pdt = len(period_dts)
 
-        cdef float* aovs = self.aov.CalcAOVValsBatched(
+        cdef float* ls = self.ls.CalcLSBatched(
             times_ptrs, mags_ptrs, times_lens,
             &periods[0], &period_dts[0], n_per, n_pdt,
         )
@@ -168,14 +152,14 @@ cdef class AOV:
         dim[1] = n_per
         dim[2] = n_pdt
 
-        cdef np.ndarray[ndim=3, dtype=np.float32_t] aovs_ndarr = \
-            np.PyArray_SimpleNewFromData(3, dim, np.NPY_FLOAT, aovs)
+        cdef np.ndarray[ndim=3, dtype=np.float32_t] ls_ndarr = \
+            np.PyArray_SimpleNewFromData(3, dim, np.NPY_FLOAT, ls)
         
         if output == 'stats':
             all_stats = []
             for i in range(len(times)):
                 stats = Statistics.statistics_from_data(
-                    aovs_ndarr,
+                    ls_ndarr,
                     [periods, period_dts],
                     n=n_stats,
                     significance_type=significance_type,
@@ -186,6 +170,6 @@ cdef class AOV:
             return all_stats
         elif output == 'periodogram':
             return [Periodogram(data, [periods, period_dts], True)
-                    for data in aovs_ndarr]
+                    for data in ls_ndarr]
         else:
             raise NotImplementedError('Only "stats" output is implemented')
