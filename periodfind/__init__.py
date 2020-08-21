@@ -11,52 +11,52 @@ class Statistics:
     ----------
     params : list of float
         List of paramters that produce this object's value
-    
-    value : flaot
+
+    value : float
         Value of the test statistic with the given params
-    
+
     mean : float
         Periodogram test statistic mean
-    
+
     std : float
         Periodogram test statistic std
-    
+
     median : float
         Periodogram test statistic median
-    
+
     mad : float
         Periodogram test statistic median absolute deviation
-    
+
     significance_type : {'stdmean', 'madmedian'}, default='stdmean'
         Specifies the significance statistic that should be used. The `stdmean`
         statistic gives a rough estimate of how likely the value is. The
         `madmedian` gives a roughly analagous statistic, but is more robust.
-    
+
     Attributes
     ----------
     params : list of float
         List of paramters that produce this object's value
-    
-    value : flaot
+
+    value : float
         Value of the test statistic with the given params
-    
+
     mean : float
         Periodogram test statistic mean
-    
+
     std : float
         Periodogram test statistic std
-    
+
     median : float
         Periodogram test statistic median
-    
+
     mad : float
         Periodogram test statistic median absolute deviation
-    
+
     significance_type : {'stdmean', 'madmedian'}
         Specifies the significance statistic that should be used. The `stdmean`
         statistic gives a rough estimate of how likely the value is. The
         `madmedian` gives a roughly analagous statistic, but is more robust.
-    
+
     significance : float
         Significance statistic, computed according to the significance_type
 
@@ -79,34 +79,34 @@ class Statistics:
             return abs(self.value - self.median) / self.mad
         else:
             raise NotImplementedError('Statistic '
-                                        + self.significance_type
-                                        + ' not implemented')
+                                      + self.significance_type
+                                      + ' not implemented')
 
     @staticmethod
-    def statistics_from_data(data, params, mean=None, std=None, median=None, mad=None, n=1, significance_type='stdmean'):
+    def statistics_from_data(data, params, use_max, mean=None, std=None, median=None, mad=None, n=1, significance_type='stdmean'):
         """Constructs statistics objects from a periodogram.
-        
+
         Parameters
         ----------
         data : ndarray
             Periodogram data to find statistics for
-        
+
         mean : float, default=None
         Periodogram test statistic mean. Calculated if not provided.
-    
+
         std : float, default=None
             Periodogram test statistic std. Calculated if not provided.
-        
+
         median : float, default=None
             Periodogram test statistic median. Calculated if not provided.
-        
+
         mad : float, default=None
             Periodogram test statistic median absolute deviation. Calculated
             if not provided.
 
         n : int, default=1
             Number of `Statistics` to generate
-        
+
         significance_type : {'stdmean', 'madmedian'}, default='stdmean'
             Specifies the significance statistic that should be used. See class
             documentation for more information.
@@ -117,11 +117,11 @@ class Statistics:
             Statistics for the top `n` parameters
         """
         # Find best parameters
-        if not self.use_max:
+        if not use_max:
             partition = np.argpartition(data, n)[:n]
         else:
             partition = np.argpartition(data, len(data) - n)[:-n]
-        
+
         idxs = np.unravel_index(partition, data.shape)
         values = data[idxs]
 
@@ -133,7 +133,7 @@ class Statistics:
         if median == None:
             median = np.median(data)
         if mad == None:
-            mad = np.median(np.abs(self.data - median))
+            mad = np.median(np.abs(data - median))
 
         best = []
         for (idx, val) in zip(idxs, values):
@@ -168,13 +168,13 @@ class Periodogram:
     ----------
     periodogram : ndarray
         Periodogram test statistic values
-    
+
     params : list of ndarray
         List of periodogram test parameters
-    
+
     use_max : bool
         Whether likely periods are periodogram maxima
-        
+
     Attributes
     ----------
     use_max : bool
@@ -182,22 +182,22 @@ class Periodogram:
 
     data : ndarray
         Periodogram test statistic values
-    
+
     params : list of ndarray
         List of periodogram test parameters
-    
+
     mean : float
         Periodogram test statistic mean
-    
+
     std : float
         Periodogram test statistic std
-    
+
     median : float
         Periodogram test statistic median
-    
+
     mad : float
         Periodogram test statistic median absolute deviation
-    
+
     Notes
     -----
     For large periodograms, the memory usage of storing full periodograms
@@ -216,7 +216,7 @@ class Periodogram:
         self.mean = np.mean(self.data)
         self.std = np.std(self.data)
         self.median = np.median(self.data)
-        self.mad = np.median(np.abs(self.data - median))
+        self.mad = np.median(np.abs(self.data - self.median))
 
     def best_params(self, n=1, significance_type='stdmean'):
         """Returns the best parameters of the periodogram.
@@ -228,7 +228,7 @@ class Periodogram:
         ----------
         n : int, default=1
             The number of top parameters to return
-        
+
         significance_type : {'stdmean', 'madmedian'}, default='stdmean'
             Specifies the significance statistic that should be used. See the
             documentation for the `Statistics` class for more information.
@@ -241,6 +241,7 @@ class Periodogram:
         return Statistics.statistics_from_data(
             self.data,
             self.params,
+            self.use_max,
             mean=self.mean,
             std=self.std,
             median=self.median,

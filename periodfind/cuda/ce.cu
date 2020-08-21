@@ -139,8 +139,9 @@ __global__ void FoldBinKernel(const float* times,
 
         for (size_t i = 0; i < h_params.NumPhaseBinOverlap(); i++) {
             for (size_t j = 0; j < h_params.NumMagBinOverlap(); j++) {
-                size_t idx = h_params.BinIndex((phase_bin + i) % h_params.NumPhaseBins(),
-                                               (mag_bin + j) % h_params.NumMagBins());
+                size_t idx =
+                    h_params.BinIndex((phase_bin + i) % h_params.NumPhaseBins(),
+                                      (mag_bin + j) % h_params.NumMagBins());
                 atomicAdd(&sh_hist[idx], 1);
             }
         }
@@ -148,8 +149,9 @@ __global__ void FoldBinKernel(const float* times,
 
     __syncthreads();
 
-    size_t div = length * h_params.NumPhaseBinOverlap() * h_params.NumMagBinOverlap();
-    
+    size_t div =
+        length * h_params.NumPhaseBinOverlap() * h_params.NumMagBinOverlap();
+
     // Copy the block's histogram into global memory
     for (size_t i = threadIdx.x; i < h_params.NumBins(); i += blockDim.x) {
         block_hist[i] =
@@ -280,9 +282,9 @@ float* ConditionalEntropy::FoldAndBin(const float* times,
     cudaMemcpy(dev_times, times, data_bytes, cudaMemcpyHostToDevice);
     cudaMemcpy(dev_mags, mags, data_bytes, cudaMemcpyHostToDevice);
     cudaMemcpy(dev_periods, periods, num_periods * sizeof(float),
-                         cudaMemcpyHostToDevice);
+               cudaMemcpyHostToDevice);
     cudaMemcpy(dev_periods, period_dts, num_p_dts * sizeof(float),
-                         cudaMemcpyHostToDevice);
+               cudaMemcpyHostToDevice);
 
     float* dev_hists =
         DeviceFoldAndBin(dev_times, dev_mags, length, dev_periods,
@@ -307,7 +309,7 @@ float* ConditionalEntropy::DeviceCalcCEFromHists(const float* hists,
                                                  const size_t num_hists) const {
     // Allocate global memory for output conditional entropy values
     float* dev_ces;
-        cudaMalloc(&dev_ces, num_hists * sizeof(float));
+    cudaMalloc(&dev_ces, num_hists * sizeof(float));
 
     const size_t n_t = 512;
     const size_t n_b = ((num_hists * NumPhaseBins()) / n_t) + 1;
@@ -334,8 +336,7 @@ float* ConditionalEntropy::CalcCEFromHists(const float* hists,
 
     // Copy CEs to host
     float* ces = (float*)malloc(num_hists * sizeof(float));
-    cudaMemcpy(ces, dev_ces, num_hists * sizeof(float),
-                        cudaMemcpyDeviceToHost);
+    cudaMemcpy(ces, dev_ces, num_hists * sizeof(float), cudaMemcpyDeviceToHost);
 
     // Free GPU memory
     cudaFree(dev_hists);
@@ -369,9 +370,9 @@ float* ConditionalEntropy::CalcCEVals(const float* times,
     cudaMemcpy(dev_times, times, data_bytes, cudaMemcpyHostToDevice);
     cudaMemcpy(dev_mags, mags, data_bytes, cudaMemcpyHostToDevice);
     cudaMemcpy(dev_periods, periods, num_periods * sizeof(float),
-                         cudaMemcpyHostToDevice);
+               cudaMemcpyHostToDevice);
     cudaMemcpy(dev_period_dts, period_dts, num_p_dts * sizeof(float),
-                         cudaMemcpyHostToDevice);
+               cudaMemcpyHostToDevice);
 
     float* dev_hists =
         DeviceFoldAndBin(dev_times, dev_mags, length, dev_periods,
@@ -381,8 +382,7 @@ float* ConditionalEntropy::CalcCEVals(const float* times,
 
     // Copy CEs to host
     float* ces = (float*)malloc(num_hists * sizeof(float));
-    cudaMemcpy(ces, dev_ces, num_hists * sizeof(float),
-                         cudaMemcpyDeviceToHost);
+    cudaMemcpy(ces, dev_ces, num_hists * sizeof(float), cudaMemcpyDeviceToHost);
 
     // Free intermediate and output values
     cudaFree(dev_hists);
@@ -420,9 +420,9 @@ float* ConditionalEntropy::CalcCEValsBatched(const std::vector<float*>& times,
     cudaMalloc(&dev_periods, num_periods * sizeof(float));
     cudaMalloc(&dev_period_dts, num_p_dts * sizeof(float));
     cudaMemcpy(dev_periods, periods, num_periods * sizeof(float),
-                         cudaMemcpyHostToDevice);
+               cudaMemcpyHostToDevice);
     cudaMemcpy(dev_period_dts, period_dts, num_p_dts * sizeof(float),
-                         cudaMemcpyHostToDevice);
+               cudaMemcpyHostToDevice);
 
     // Intermediate histogram memory
     size_t num_hists = num_periods * num_p_dts;
@@ -459,9 +459,9 @@ float* ConditionalEntropy::CalcCEValsBatched(const std::vector<float*>& times,
         // Copy light curve into device buffer
         const size_t curve_bytes = lengths[i] * sizeof(float);
         cudaMemcpy(dev_times_buffer, times[i], curve_bytes,
-                             cudaMemcpyHostToDevice);
+                   cudaMemcpyHostToDevice);
         cudaMemcpy(dev_mags_buffer, mags[i], curve_bytes,
-                             cudaMemcpyHostToDevice);
+                   cudaMemcpyHostToDevice);
 
         // Zero conditional entropy output
         cudaMemset(dev_ces, 0, ce_out_size);
@@ -479,7 +479,7 @@ float* ConditionalEntropy::CalcCEValsBatched(const std::vector<float*>& times,
 
         // Copy CE data back to host
         cudaMemcpy(&ce_host[i * num_hists], dev_ces, ce_out_size,
-                             cudaMemcpyDeviceToHost);
+                   cudaMemcpyDeviceToHost);
     }
 
     // Free all of the GPU memory

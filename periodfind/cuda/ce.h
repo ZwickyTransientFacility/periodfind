@@ -24,7 +24,7 @@ class ConditionalEntropy {
     /**
      * Constructs a ConditionalEntropy object with the given number of phase and
      * magnitude bins.
-     * 
+     *
      * @param n_phase number of phase bins
      * @param n_mag number of magnitude bins
      */
@@ -34,7 +34,7 @@ class ConditionalEntropy {
     /**
      * Constructs a ConditionalEntropy object with the given number of phase and
      * magnitude bins, using the specified number of bins overlapping.
-     * 
+     *
      * @param n_phase number of phase bins
      * @param n_mag number of magnitude bins
      * @param p_overlap number of phase bins to overlap
@@ -47,77 +47,77 @@ class ConditionalEntropy {
 
     /**
      * Returns the number of total bins in the histogram.
-     * 
+     *
      * @return number of bins in histogram
      */
     size_t NumBins() const;
 
     /**
      * Returns the number of phase bins in the histogram.
-     * 
+     *
      * @return number of phase bins in histogram
      */
     size_t NumPhaseBins() const;
 
     /**
      * Returns the number of magnitude bins in the histogram.
-     * 
+     *
      * @return number of magnitude bins in histogram
      */
     size_t NumMagBins() const;
 
     /**
      * Returns the amount of phase bin overlap in the histogram.
-     * 
+     *
      * @return amount of phase bin overlap in histogram
      */
     size_t NumPhaseBinOverlap() const;
 
     /**
      * Returns the amount of magnitude bin overlap in the histogram.
-     * 
+     *
      * @return amount of magnitude bin overlap in histogram
      */
     size_t NumMagBinOverlap() const;
 
     /**
      * Returns the size of the phase bins in the histogram.
-     * 
+     *
      * @return size of the phase bins
      */
     float PhaseBinSize() const;
 
     /**
      * Returns the size of the magnitude bins in the histogram.
-     * 
+     *
      * @return size of the magnitude bins
      */
     float MagBinSize() const;
 
     /**
      * Gives the first phase bin for a given phase value.
-     * 
+     *
      * @param phase_val phase value
-     * 
+     *
      * @return phase bin index
      */
     size_t PhaseBin(float phase_val) const;
 
     /**
      * Gives the first magnitude bin for a given magnitude value.
-     * 
+     *
      * @param mag_val magnitude value
-     * 
+     *
      * @return magnitude bin index
      */
     size_t MagBin(float mag_val) const;
 
     /**
      * Gives the index of a given bin in a row-major histogram.
-     * 
+     *
      * @param phase_bin phase bin index
      * @param mag_bin magnitude bin index
-     * 
+     *
      * @return row-major histogram index
      */
     size_t BinIndex(size_t phase_bin, size_t mag_bin) const;

@@ -16,23 +16,24 @@ class AOV {
     size_t num_bins;
     size_t num_overlap;
     float bin_size;
+
    public:
     /**
      * Constructs an AOV object with 10 phase bins.
      */
-    AOV() : AOV(10) {};
+    AOV() : AOV(10){};
 
     /**
      * Constructs an AOV object with the given number of phase bins.
-     * 
+     *
      * @param n_bins number of bins
      */
-    AOV(size_t n_bins) : AOV(n_bins, 1) {};
+    AOV(size_t n_bins) : AOV(n_bins, 1){};
 
     /**
-     * Constructs an AOV object with the given number of phase bins and using the
-     * specified number of bins overlapping.
-     * 
+     * Constructs an AOV object with the given number of phase bins and using
+     * the specified number of bins overlapping.
+     *
      * @param n_bins number of phase bins
      * @param bin_overlap number of phase bins to overlap
      */
@@ -40,30 +41,31 @@ class AOV {
 
     /**
      * Returns the number of phase bins in the histogram.
-     * 
+     *
      * @return number of phase bins in histogram
      */
     size_t NumPhaseBins() const;
 
     /**
      * Returns the amount of phase bin overlap in the histogram.
-     * 
+     *
      * @return amount of phase bin overlap in histogram
      */
     size_t NumPhaseBinOverlap() const;
 
     /**
      * Gives the first phase bin for a given phase value.
-     * 
+     *
      * @param phase_val phase value
-     * 
+     *
      * @return phase bin index
      */
+
     /**
      * Gives the first phase bin for a given phase value.
-     * 
+     *
      * @param phase_val phase value
-     * 
+     *
      * @return phase bin index
      */
     size_t PhaseBin(float phase_val) const;
@@ -121,12 +123,12 @@ class AOV {
      * @return host array of histograms
      */
     AOVData* FoldAndBin(const float* times,
-                      const float* mags,
-                      const size_t length,
-                      const float* periods,
-                      const float* period_dts,
-                      const size_t num_periods,
-                      const size_t num_p_dts) const;
+                        const float* mags,
+                        const size_t length,
+                        const float* periods,
+                        const float* period_dts,
+                        const size_t num_periods,
+                        const size_t num_p_dts) const;
 
     /**
      * Computes the AOV values for an array of histograms.

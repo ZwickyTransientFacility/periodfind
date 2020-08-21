@@ -76,13 +76,13 @@ __global__ void LombScargleKernel(const float* times,
     numerator_r *= numerator_r;
 
     float denominator_l = cos_tau * cos_tau * cos_cos
-                            + 2 * cos_tau * sin_tau * cos_sin
-                            + sin_tau * sin_tau * sin_sin;
-    
+                          + 2 * cos_tau * sin_tau * cos_sin
+                          + sin_tau * sin_tau * sin_sin;
+
     float denominator_r = cos_tau * cos_tau * sin_sin
-                            - 2 * cos_tau * sin_tau * cos_sin
-                            + sin_tau * sin_tau * cos_cos;
-    
+                          - 2 * cos_tau * sin_tau * cos_sin
+                          + sin_tau * sin_tau * cos_cos;
+
     periodogram[thread_y * num_periods + thread_x] =
         0.5 * ((numerator_l / denominator_l) + (numerator_r / denominator_r));
 }
@@ -112,7 +112,7 @@ float* LombScargle::DeviceCalcLS(const float* times,
     LombScargleKernel<<<grid_dim, block_dim>>>(times, mags, length, periods,
                                                period_dts, num_periods,
                                                num_p_dts, *this, periodogram);
-    
+
     return periodogram;
 }
 
@@ -140,19 +140,19 @@ float* LombScargle::CalcLS(const float* times,
     cudaMemcpy(dev_times, times, data_bytes, cudaMemcpyHostToDevice);
     cudaMemcpy(dev_mags, mags, data_bytes, cudaMemcpyHostToDevice);
     cudaMemcpy(dev_periods, periods, num_periods * sizeof(float),
-                         cudaMemcpyHostToDevice);
+               cudaMemcpyHostToDevice);
     cudaMemcpy(dev_period_dts, period_dts, num_p_dts * sizeof(float),
-                         cudaMemcpyHostToDevice);
-    
+               cudaMemcpyHostToDevice);
+
     float* dev_periodogram =
-        DeviceCalcLS(dev_times, dev_mags, length, dev_periods,
-                     dev_period_dts, num_periods, num_p_dts);
-    
+        DeviceCalcLS(dev_times, dev_mags, length, dev_periods, dev_period_dts,
+                     num_periods, num_p_dts);
+
     const size_t periodogram_size = num_periods * num_p_dts * sizeof(float);
     float* periodogram = (float*)malloc(periodogram_size);
     cudaMemcpy(periodogram, dev_periodogram, periodogram_size,
-                         cudaMemcpyDeviceToHost);
-    
+               cudaMemcpyDeviceToHost);
+
     cudaFree(dev_periodogram);
 
     cudaFree(dev_times);
@@ -187,9 +187,9 @@ float* LombScargle::CalcLSBatched(const std::vector<float*>& times,
     cudaMalloc(&dev_periods, num_periods * sizeof(float));
     cudaMalloc(&dev_period_dts, num_p_dts * sizeof(float));
     cudaMemcpy(dev_periods, periods, num_periods * sizeof(float),
-                         cudaMemcpyHostToDevice);
+               cudaMemcpyHostToDevice);
     cudaMemcpy(dev_period_dts, period_dts, num_p_dts * sizeof(float),
-                         cudaMemcpyHostToDevice);
+               cudaMemcpyHostToDevice);
 
     // Intermediate conditional entropy memory
     float* dev_per;
@@ -217,21 +217,20 @@ float* LombScargle::CalcLSBatched(const std::vector<float*>& times,
         // Copy light curve into device buffer
         const size_t curve_bytes = lengths[i] * sizeof(float);
         cudaMemcpy(dev_times_buffer, times[i], curve_bytes,
-                             cudaMemcpyHostToDevice);
+                   cudaMemcpyHostToDevice);
         cudaMemcpy(dev_mags_buffer, mags[i], curve_bytes,
-                             cudaMemcpyHostToDevice);
+                   cudaMemcpyHostToDevice);
 
         // Zero conditional entropy output
         cudaMemset(dev_per, 0, per_out_size);
 
-        LombScargleKernel<<<grid_dim, block_dim>>>(dev_times_buffer, dev_mags_buffer, lengths[i], dev_periods,
-                                                   dev_period_dts, num_periods,
-                                                   num_p_dts, *this,
-                                                   dev_per);
+        LombScargleKernel<<<grid_dim, block_dim>>>(
+            dev_times_buffer, dev_mags_buffer, lengths[i], dev_periods,
+            dev_period_dts, num_periods, num_p_dts, *this, dev_per);
 
         // Copy periodogram back to host
-        cudaMemcpy(&per_host[i * per_points], dev_per,per_out_size,
-                             cudaMemcpyDeviceToHost);
+        cudaMemcpy(&per_host[i * per_points], dev_per, per_out_size,
+                   cudaMemcpyDeviceToHost);
     }
 
     // Free all of the GPU memory

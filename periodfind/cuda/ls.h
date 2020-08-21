@@ -41,7 +41,7 @@ class LombScargle {
                         const float* period_dts,
                         const size_t num_periods,
                         const size_t num_p_dts) const;
-   
+
     /**
      * Computes the Lomb-Scargle periodogram for the input light curve.
      *
@@ -75,9 +75,9 @@ class LombScargle {
      * Computes the Lomb-Scargle periodogram for all input light curves.
      *
      * Computes the Lomb-Scargle periodogram for each input light curve (times
-     * and mags). The light curves should be stored consecutively in the input times
-     * and magnitudes arrays, and should have lengths as specified (in order) in
-     * the lengths vector. For each light curve, the periodogram is
+     * and mags). The light curves should be stored consecutively in the input
+     * times and magnitudes arrays, and should have lengths as specified (in
+     * order) in the lengths vector. For each light curve, the periodogram is
      * calculated for each period and time derivative, indexed first by period
      * index then time derivative index (i.e. (period 0, td 0), (period 0, td
      * 1), ... (period 1, td 0), (period 1, td 1) etc.). The periodogram
