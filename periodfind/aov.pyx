@@ -185,8 +185,9 @@ cdef class AOV:
             all_stats = []
             for i in range(len(times)):
                 stats = Statistics.statistics_from_data(
-                    aovs_ndarr,
+                    aovs_ndarr[i],
                     [periods, period_dts],
+                    True,
                     n=n_stats,
                     significance_type=significance_type,
                 )

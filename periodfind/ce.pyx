@@ -202,8 +202,9 @@ cdef class ConditionalEntropy:
             all_stats = []
             for i in range(len(times)):
                 stats = Statistics.statistics_from_data(
-                    ces_ndarr,
+                    ces_ndarr[i],
                     [periods, period_dts],
+                    False,
                     n=n_stats,
                     significance_type=significance_type,
                 )

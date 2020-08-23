@@ -1159,7 +1159,7 @@ typedef npy_clongdouble __pyx_t_5numpy_clongdouble_t;
  */
 typedef npy_cdouble __pyx_t_5numpy_complex_t;
 
-/* "periodfind/ls.pyx":33
+/* "periodfind/ls.pyx":43
  *                              const size_t num_p_dts) const;
  * 
  * cdef class LombScargle:             # <<<<<<<<<<<<<<
@@ -1172,7 +1172,7 @@ struct __pyx_obj_10periodfind_2ls_LombScargle {
 };
 
 
-/* "periodfind/ls.pyx":45
+/* "periodfind/ls.pyx":55
  *         self.ls = new CppLombScargle()
  * 
  *     def calc(self,             # <<<<<<<<<<<<<<
@@ -1186,7 +1186,7 @@ struct __pyx_obj_10periodfind_2ls___pyx_scope_struct__calc {
 };
 
 
-/* "periodfind/ls.pyx":139
+/* "periodfind/ls.pyx":149
  * 
  *         # Make sure the individual lengths match
  *         if any(t != m for t, m in zip(times_lens, mags_lens)):             # <<<<<<<<<<<<<<
@@ -1467,6 +1467,28 @@ static CYTHON_INLINE int __Pyx_PyBytes_Equals(PyObject* s1, PyObject* s2, int eq
 
 /* UnicodeEquals.proto */
 static CYTHON_INLINE int __Pyx_PyUnicode_Equals(PyObject* s1, PyObject* s2, int equals);
+
+/* GetItemInt.proto */
+#define __Pyx_GetItemInt(o, i, type, is_signed, to_py_func, is_list, wraparound, boundscheck)\
+    (__Pyx_fits_Py_ssize_t(i, type, is_signed) ?\
+    __Pyx_GetItemInt_Fast(o, (Py_ssize_t)i, is_list, wraparound, boundscheck) :\
+    (is_list ? (PyErr_SetString(PyExc_IndexError, "list index out of range"), (PyObject*)NULL) :\
+               __Pyx_GetItemInt_Generic(o, to_py_func(i))))
+#define __Pyx_GetItemInt_List(o, i, type, is_signed, to_py_func, is_list, wraparound, boundscheck)\
+    (__Pyx_fits_Py_ssize_t(i, type, is_signed) ?\
+    __Pyx_GetItemInt_List_Fast(o, (Py_ssize_t)i, wraparound, boundscheck) :\
+    (PyErr_SetString(PyExc_IndexError, "list index out of range"), (PyObject*)NULL))
+static CYTHON_INLINE PyObject *__Pyx_GetItemInt_List_Fast(PyObject *o, Py_ssize_t i,
+                                                              int wraparound, int boundscheck);
+#define __Pyx_GetItemInt_Tuple(o, i, type, is_signed, to_py_func, is_list, wraparound, boundscheck)\
+    (__Pyx_fits_Py_ssize_t(i, type, is_signed) ?\
+    __Pyx_GetItemInt_Tuple_Fast(o, (Py_ssize_t)i, wraparound, boundscheck) :\
+    (PyErr_SetString(PyExc_IndexError, "tuple index out of range"), (PyObject*)NULL))
+static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Tuple_Fast(PyObject *o, Py_ssize_t i,
+                                                              int wraparound, int boundscheck);
+static PyObject *__Pyx_GetItemInt_Generic(PyObject *o, PyObject* j);
+static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Fast(PyObject *o, Py_ssize_t i,
+                                                     int is_list, int wraparound, int boundscheck);
 
 /* ListCompAppend.proto */
 #if CYTHON_USE_PYLIST_INTERNALS && CYTHON_ASSUME_SAFE_MACROS
@@ -2030,6 +2052,7 @@ static const char __pyx_k_cline_in_traceback[] = "cline_in_traceback";
 static const char __pyx_k_NotImplementedError[] = "NotImplementedError";
 static const char __pyx_k_calc_locals_genexpr[] = "calc.<locals>.genexpr";
 static const char __pyx_k_statistics_from_data[] = "statistics_from_data";
+static const char __pyx_k_Provides_an_interface_for_analy[] = "\nProvides an interface for analyzing light curves using Lomb-Scargle\nperiodograms.\n";
 static const char __pyx_k_numpy_core_multiarray_failed_to[] = "numpy.core.multiarray failed to import";
 static const char __pyx_k_unknown_dtype_code_in_numpy_pxd[] = "unknown dtype code in numpy.pxd (%d)";
 static const char __pyx_k_Format_string_allocated_too_shor[] = "Format string allocated too short, see comment in numpy.pxd";
@@ -2117,7 +2140,7 @@ static PyObject *__pyx_tuple__7;
 static PyObject *__pyx_tuple__8;
 /* Late includes */
 
-/* "periodfind/ls.pyx":42
+/* "periodfind/ls.pyx":52
  *     cdef CppLombScargle* ls
  * 
  *     def __cinit__(self):             # <<<<<<<<<<<<<<
@@ -2146,7 +2169,7 @@ static int __pyx_pf_10periodfind_2ls_11LombScargle___cinit__(struct __pyx_obj_10
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__cinit__", 0);
 
-  /* "periodfind/ls.pyx":43
+  /* "periodfind/ls.pyx":53
  * 
  *     def __cinit__(self):
  *         self.ls = new CppLombScargle()             # <<<<<<<<<<<<<<
@@ -2155,7 +2178,7 @@ static int __pyx_pf_10periodfind_2ls_11LombScargle___cinit__(struct __pyx_obj_10
  */
   __pyx_v_self->ls = new LombScargle();
 
-  /* "periodfind/ls.pyx":42
+  /* "periodfind/ls.pyx":52
  *     cdef CppLombScargle* ls
  * 
  *     def __cinit__(self):             # <<<<<<<<<<<<<<
@@ -2169,7 +2192,7 @@ static int __pyx_pf_10periodfind_2ls_11LombScargle___cinit__(struct __pyx_obj_10
   return __pyx_r;
 }
 
-/* "periodfind/ls.pyx":45
+/* "periodfind/ls.pyx":55
  *         self.ls = new CppLombScargle()
  * 
  *     def calc(self,             # <<<<<<<<<<<<<<
@@ -2200,7 +2223,7 @@ static PyObject *__pyx_pw_10periodfind_2ls_11LombScargle_3calc(PyObject *__pyx_v
     PyObject* values[8] = {0,0,0,0,0,0,0,0};
     values[4] = ((PyObject *)__pyx_n_u_stats);
 
-    /* "periodfind/ls.pyx":51
+    /* "periodfind/ls.pyx":61
  *              np.ndarray[ndim=1, dtype=np.float32_t] period_dts,
  *              output="stats",
  *              normalize=False,             # <<<<<<<<<<<<<<
@@ -2242,19 +2265,19 @@ static PyObject *__pyx_pw_10periodfind_2ls_11LombScargle_3calc(PyObject *__pyx_v
         case  1:
         if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_mags)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("calc", 0, 4, 8, 1); __PYX_ERR(0, 45, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("calc", 0, 4, 8, 1); __PYX_ERR(0, 55, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_periods)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("calc", 0, 4, 8, 2); __PYX_ERR(0, 45, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("calc", 0, 4, 8, 2); __PYX_ERR(0, 55, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
         if (likely((values[3] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_period_dts)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("calc", 0, 4, 8, 3); __PYX_ERR(0, 45, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("calc", 0, 4, 8, 3); __PYX_ERR(0, 55, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  4:
@@ -2282,7 +2305,7 @@ static PyObject *__pyx_pw_10periodfind_2ls_11LombScargle_3calc(PyObject *__pyx_v
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "calc") < 0)) __PYX_ERR(0, 45, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "calc") < 0)) __PYX_ERR(0, 55, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -2313,19 +2336,19 @@ static PyObject *__pyx_pw_10periodfind_2ls_11LombScargle_3calc(PyObject *__pyx_v
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("calc", 0, 4, 8, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 45, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("calc", 0, 4, 8, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 55, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("periodfind.ls.LombScargle.calc", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_times), (&PyList_Type), 1, "times", 1))) __PYX_ERR(0, 46, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_mags), (&PyList_Type), 1, "mags", 1))) __PYX_ERR(0, 47, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_periods), __pyx_ptype_5numpy_ndarray, 1, "periods", 0))) __PYX_ERR(0, 48, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_period_dts), __pyx_ptype_5numpy_ndarray, 1, "period_dts", 0))) __PYX_ERR(0, 49, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_times), (&PyList_Type), 1, "times", 1))) __PYX_ERR(0, 56, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_mags), (&PyList_Type), 1, "mags", 1))) __PYX_ERR(0, 57, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_periods), __pyx_ptype_5numpy_ndarray, 1, "periods", 0))) __PYX_ERR(0, 58, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_period_dts), __pyx_ptype_5numpy_ndarray, 1, "period_dts", 0))) __PYX_ERR(0, 59, __pyx_L1_error)
   __pyx_r = __pyx_pf_10periodfind_2ls_11LombScargle_2calc(((struct __pyx_obj_10periodfind_2ls_LombScargle *)__pyx_v_self), __pyx_v_times, __pyx_v_mags, __pyx_v_periods, __pyx_v_period_dts, __pyx_v_output, __pyx_v_normalize, __pyx_v_n_stats, __pyx_v_significance_type);
 
-  /* "periodfind/ls.pyx":45
+  /* "periodfind/ls.pyx":55
  *         self.ls = new CppLombScargle()
  * 
  *     def calc(self,             # <<<<<<<<<<<<<<
@@ -2343,7 +2366,7 @@ static PyObject *__pyx_pw_10periodfind_2ls_11LombScargle_3calc(PyObject *__pyx_v
 }
 static PyObject *__pyx_gb_10periodfind_2ls_11LombScargle_4calc_2generator(__pyx_CoroutineObject *__pyx_generator, CYTHON_UNUSED PyThreadState *__pyx_tstate, PyObject *__pyx_sent_value); /* proto */
 
-/* "periodfind/ls.pyx":139
+/* "periodfind/ls.pyx":149
  * 
  *         # Make sure the individual lengths match
  *         if any(t != m for t, m in zip(times_lens, mags_lens)):             # <<<<<<<<<<<<<<
@@ -2363,7 +2386,7 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_4calc_genexpr(PyObject 
   if (unlikely(!__pyx_cur_scope)) {
     __pyx_cur_scope = ((struct __pyx_obj_10periodfind_2ls___pyx_scope_struct_1_genexpr *)Py_None);
     __Pyx_INCREF(Py_None);
-    __PYX_ERR(0, 139, __pyx_L1_error)
+    __PYX_ERR(0, 149, __pyx_L1_error)
   } else {
     __Pyx_GOTREF(__pyx_cur_scope);
   }
@@ -2371,7 +2394,7 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_4calc_genexpr(PyObject 
   __Pyx_INCREF(((PyObject *)__pyx_cur_scope->__pyx_outer_scope));
   __Pyx_GIVEREF(__pyx_cur_scope->__pyx_outer_scope);
   {
-    __pyx_CoroutineObject *gen = __Pyx_Generator_New((__pyx_coroutine_body_t) __pyx_gb_10periodfind_2ls_11LombScargle_4calc_2generator, NULL, (PyObject *) __pyx_cur_scope, __pyx_n_s_genexpr, __pyx_n_s_calc_locals_genexpr, __pyx_n_s_periodfind_ls); if (unlikely(!gen)) __PYX_ERR(0, 139, __pyx_L1_error)
+    __pyx_CoroutineObject *gen = __Pyx_Generator_New((__pyx_coroutine_body_t) __pyx_gb_10periodfind_2ls_11LombScargle_4calc_2generator, NULL, (PyObject *) __pyx_cur_scope, __pyx_n_s_genexpr, __pyx_n_s_calc_locals_genexpr, __pyx_n_s_periodfind_ls); if (unlikely(!gen)) __PYX_ERR(0, 149, __pyx_L1_error)
     __Pyx_DECREF(__pyx_cur_scope);
     __Pyx_RefNannyFinishContext();
     return (PyObject *) gen;
@@ -2412,12 +2435,12 @@ static PyObject *__pyx_gb_10periodfind_2ls_11LombScargle_4calc_2generator(__pyx_
     return NULL;
   }
   __pyx_L3_first_run:;
-  if (unlikely(!__pyx_sent_value)) __PYX_ERR(0, 139, __pyx_L1_error)
-  __pyx_t_1 = __pyx_convert_vector_to_py_size_t(__pyx_cur_scope->__pyx_outer_scope->__pyx_v_times_lens); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 139, __pyx_L1_error)
+  if (unlikely(!__pyx_sent_value)) __PYX_ERR(0, 149, __pyx_L1_error)
+  __pyx_t_1 = __pyx_convert_vector_to_py_size_t(__pyx_cur_scope->__pyx_outer_scope->__pyx_v_times_lens); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 149, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __pyx_convert_vector_to_py_size_t(__pyx_cur_scope->__pyx_outer_scope->__pyx_v_mags_lens); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 139, __pyx_L1_error)
+  __pyx_t_2 = __pyx_convert_vector_to_py_size_t(__pyx_cur_scope->__pyx_outer_scope->__pyx_v_mags_lens); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 149, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 139, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 149, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_1);
   PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1);
@@ -2425,16 +2448,16 @@ static PyObject *__pyx_gb_10periodfind_2ls_11LombScargle_4calc_2generator(__pyx_
   PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_2);
   __pyx_t_1 = 0;
   __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin_zip, __pyx_t_3, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 139, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin_zip, __pyx_t_3, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 149, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   if (likely(PyList_CheckExact(__pyx_t_2)) || PyTuple_CheckExact(__pyx_t_2)) {
     __pyx_t_3 = __pyx_t_2; __Pyx_INCREF(__pyx_t_3); __pyx_t_4 = 0;
     __pyx_t_5 = NULL;
   } else {
-    __pyx_t_4 = -1; __pyx_t_3 = PyObject_GetIter(__pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 139, __pyx_L1_error)
+    __pyx_t_4 = -1; __pyx_t_3 = PyObject_GetIter(__pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 149, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_5 = Py_TYPE(__pyx_t_3)->tp_iternext; if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 139, __pyx_L1_error)
+    __pyx_t_5 = Py_TYPE(__pyx_t_3)->tp_iternext; if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 149, __pyx_L1_error)
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   for (;;) {
@@ -2442,17 +2465,17 @@ static PyObject *__pyx_gb_10periodfind_2ls_11LombScargle_4calc_2generator(__pyx_
       if (likely(PyList_CheckExact(__pyx_t_3))) {
         if (__pyx_t_4 >= PyList_GET_SIZE(__pyx_t_3)) break;
         #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-        __pyx_t_2 = PyList_GET_ITEM(__pyx_t_3, __pyx_t_4); __Pyx_INCREF(__pyx_t_2); __pyx_t_4++; if (unlikely(0 < 0)) __PYX_ERR(0, 139, __pyx_L1_error)
+        __pyx_t_2 = PyList_GET_ITEM(__pyx_t_3, __pyx_t_4); __Pyx_INCREF(__pyx_t_2); __pyx_t_4++; if (unlikely(0 < 0)) __PYX_ERR(0, 149, __pyx_L1_error)
         #else
-        __pyx_t_2 = PySequence_ITEM(__pyx_t_3, __pyx_t_4); __pyx_t_4++; if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 139, __pyx_L1_error)
+        __pyx_t_2 = PySequence_ITEM(__pyx_t_3, __pyx_t_4); __pyx_t_4++; if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 149, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         #endif
       } else {
         if (__pyx_t_4 >= PyTuple_GET_SIZE(__pyx_t_3)) break;
         #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-        __pyx_t_2 = PyTuple_GET_ITEM(__pyx_t_3, __pyx_t_4); __Pyx_INCREF(__pyx_t_2); __pyx_t_4++; if (unlikely(0 < 0)) __PYX_ERR(0, 139, __pyx_L1_error)
+        __pyx_t_2 = PyTuple_GET_ITEM(__pyx_t_3, __pyx_t_4); __Pyx_INCREF(__pyx_t_2); __pyx_t_4++; if (unlikely(0 < 0)) __PYX_ERR(0, 149, __pyx_L1_error)
         #else
-        __pyx_t_2 = PySequence_ITEM(__pyx_t_3, __pyx_t_4); __pyx_t_4++; if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 139, __pyx_L1_error)
+        __pyx_t_2 = PySequence_ITEM(__pyx_t_3, __pyx_t_4); __pyx_t_4++; if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 149, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         #endif
       }
@@ -2462,7 +2485,7 @@ static PyObject *__pyx_gb_10periodfind_2ls_11LombScargle_4calc_2generator(__pyx_
         PyObject* exc_type = PyErr_Occurred();
         if (exc_type) {
           if (likely(__Pyx_PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
-          else __PYX_ERR(0, 139, __pyx_L1_error)
+          else __PYX_ERR(0, 149, __pyx_L1_error)
         }
         break;
       }
@@ -2474,7 +2497,7 @@ static PyObject *__pyx_gb_10periodfind_2ls_11LombScargle_4calc_2generator(__pyx_
       if (unlikely(size != 2)) {
         if (size > 2) __Pyx_RaiseTooManyValuesError(2);
         else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
-        __PYX_ERR(0, 139, __pyx_L1_error)
+        __PYX_ERR(0, 149, __pyx_L1_error)
       }
       #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
       if (likely(PyTuple_CheckExact(sequence))) {
@@ -2487,15 +2510,15 @@ static PyObject *__pyx_gb_10periodfind_2ls_11LombScargle_4calc_2generator(__pyx_
       __Pyx_INCREF(__pyx_t_1);
       __Pyx_INCREF(__pyx_t_6);
       #else
-      __pyx_t_1 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 139, __pyx_L1_error)
+      __pyx_t_1 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 149, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
-      __pyx_t_6 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 139, __pyx_L1_error)
+      __pyx_t_6 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 149, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_6);
       #endif
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     } else {
       Py_ssize_t index = -1;
-      __pyx_t_7 = PyObject_GetIter(__pyx_t_2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 139, __pyx_L1_error)
+      __pyx_t_7 = PyObject_GetIter(__pyx_t_2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 149, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_7);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __pyx_t_8 = Py_TYPE(__pyx_t_7)->tp_iternext;
@@ -2503,7 +2526,7 @@ static PyObject *__pyx_gb_10periodfind_2ls_11LombScargle_4calc_2generator(__pyx_
       __Pyx_GOTREF(__pyx_t_1);
       index = 1; __pyx_t_6 = __pyx_t_8(__pyx_t_7); if (unlikely(!__pyx_t_6)) goto __pyx_L6_unpacking_failed;
       __Pyx_GOTREF(__pyx_t_6);
-      if (__Pyx_IternextUnpackEndCheck(__pyx_t_8(__pyx_t_7), 2) < 0) __PYX_ERR(0, 139, __pyx_L1_error)
+      if (__Pyx_IternextUnpackEndCheck(__pyx_t_8(__pyx_t_7), 2) < 0) __PYX_ERR(0, 149, __pyx_L1_error)
       __pyx_t_8 = NULL;
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
       goto __pyx_L7_unpacking_done;
@@ -2511,7 +2534,7 @@ static PyObject *__pyx_gb_10periodfind_2ls_11LombScargle_4calc_2generator(__pyx_
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
       __pyx_t_8 = NULL;
       if (__Pyx_IterFinish() == 0) __Pyx_RaiseNeedMoreValuesError(index);
-      __PYX_ERR(0, 139, __pyx_L1_error)
+      __PYX_ERR(0, 149, __pyx_L1_error)
       __pyx_L7_unpacking_done:;
     }
     __Pyx_XGOTREF(__pyx_cur_scope->__pyx_v_t);
@@ -2522,8 +2545,8 @@ static PyObject *__pyx_gb_10periodfind_2ls_11LombScargle_4calc_2generator(__pyx_
     __Pyx_XDECREF_SET(__pyx_cur_scope->__pyx_v_m, __pyx_t_6);
     __Pyx_GIVEREF(__pyx_t_6);
     __pyx_t_6 = 0;
-    __pyx_t_2 = PyObject_RichCompare(__pyx_cur_scope->__pyx_v_t, __pyx_cur_scope->__pyx_v_m, Py_NE); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 139, __pyx_L1_error)
-    __pyx_t_9 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely(__pyx_t_9 < 0)) __PYX_ERR(0, 139, __pyx_L1_error)
+    __pyx_t_2 = PyObject_RichCompare(__pyx_cur_scope->__pyx_v_t, __pyx_cur_scope->__pyx_v_m, Py_NE); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 149, __pyx_L1_error)
+    __pyx_t_9 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely(__pyx_t_9 < 0)) __PYX_ERR(0, 149, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     if (__pyx_t_9) {
       __Pyx_XDECREF(__pyx_r);
@@ -2563,7 +2586,7 @@ static PyObject *__pyx_gb_10periodfind_2ls_11LombScargle_4calc_2generator(__pyx_
   return __pyx_r;
 }
 
-/* "periodfind/ls.pyx":45
+/* "periodfind/ls.pyx":55
  *         self.ls = new CppLombScargle()
  * 
  *     def calc(self,             # <<<<<<<<<<<<<<
@@ -2590,7 +2613,7 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
   npy_intp __pyx_v_dim[3];
   PyArrayObject *__pyx_v_ls_ndarr = 0;
   PyObject *__pyx_v_all_stats = NULL;
-  CYTHON_UNUSED Py_ssize_t __pyx_v_i;
+  Py_ssize_t __pyx_v_i;
   PyObject *__pyx_v_stats = NULL;
   PyObject *__pyx_8genexpr1__pyx_v_data = NULL;
   __Pyx_LocalBuf_ND __pyx_pybuffernd_ls_ndarr;
@@ -2633,7 +2656,7 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
   if (unlikely(!__pyx_cur_scope)) {
     __pyx_cur_scope = ((struct __pyx_obj_10periodfind_2ls___pyx_scope_struct__calc *)Py_None);
     __Pyx_INCREF(Py_None);
-    __PYX_ERR(0, 45, __pyx_L1_error)
+    __PYX_ERR(0, 55, __pyx_L1_error)
   } else {
     __Pyx_GOTREF(__pyx_cur_scope);
   }
@@ -2659,16 +2682,16 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
   __pyx_pybuffernd_period_dts.rcbuffer = &__pyx_pybuffer_period_dts;
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_periods.rcbuffer->pybuffer, (PyObject*)__pyx_v_periods, &__Pyx_TypeInfo_nn___pyx_t_5numpy_float32_t, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 45, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_periods.rcbuffer->pybuffer, (PyObject*)__pyx_v_periods, &__Pyx_TypeInfo_nn___pyx_t_5numpy_float32_t, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 55, __pyx_L1_error)
   }
   __pyx_pybuffernd_periods.diminfo[0].strides = __pyx_pybuffernd_periods.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_periods.diminfo[0].shape = __pyx_pybuffernd_periods.rcbuffer->pybuffer.shape[0];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_period_dts.rcbuffer->pybuffer, (PyObject*)__pyx_v_period_dts, &__Pyx_TypeInfo_nn___pyx_t_5numpy_float32_t, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 45, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_period_dts.rcbuffer->pybuffer, (PyObject*)__pyx_v_period_dts, &__Pyx_TypeInfo_nn___pyx_t_5numpy_float32_t, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 55, __pyx_L1_error)
   }
   __pyx_pybuffernd_period_dts.diminfo[0].strides = __pyx_pybuffernd_period_dts.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_period_dts.diminfo[0].shape = __pyx_pybuffernd_period_dts.rcbuffer->pybuffer.shape[0];
 
-  /* "periodfind/ls.pyx":109
+  /* "periodfind/ls.pyx":119
  * 
  *         # Make sure the number of times and mags matches
  *         if len(times) != len(mags):             # <<<<<<<<<<<<<<
@@ -2677,18 +2700,18 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
  */
   if (unlikely(__pyx_v_times == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
-    __PYX_ERR(0, 109, __pyx_L1_error)
+    __PYX_ERR(0, 119, __pyx_L1_error)
   }
-  __pyx_t_1 = PyList_GET_SIZE(__pyx_v_times); if (unlikely(__pyx_t_1 == ((Py_ssize_t)-1))) __PYX_ERR(0, 109, __pyx_L1_error)
+  __pyx_t_1 = PyList_GET_SIZE(__pyx_v_times); if (unlikely(__pyx_t_1 == ((Py_ssize_t)-1))) __PYX_ERR(0, 119, __pyx_L1_error)
   if (unlikely(__pyx_v_mags == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
-    __PYX_ERR(0, 109, __pyx_L1_error)
+    __PYX_ERR(0, 119, __pyx_L1_error)
   }
-  __pyx_t_2 = PyList_GET_SIZE(__pyx_v_mags); if (unlikely(__pyx_t_2 == ((Py_ssize_t)-1))) __PYX_ERR(0, 109, __pyx_L1_error)
+  __pyx_t_2 = PyList_GET_SIZE(__pyx_v_mags); if (unlikely(__pyx_t_2 == ((Py_ssize_t)-1))) __PYX_ERR(0, 119, __pyx_L1_error)
   __pyx_t_3 = ((__pyx_t_1 != __pyx_t_2) != 0);
   if (__pyx_t_3) {
 
-    /* "periodfind/ls.pyx":110
+    /* "periodfind/ls.pyx":120
  *         # Make sure the number of times and mags matches
  *         if len(times) != len(mags):
  *             return np.zeros([0, 0, 0], dtype=np.float32)             # <<<<<<<<<<<<<<
@@ -2696,12 +2719,12 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
  *         cdef np.ndarray[ndim=1, dtype=np.float32_t] time_arr
  */
     __Pyx_XDECREF(__pyx_r);
-    __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 110, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 120, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
-    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_zeros); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 110, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_zeros); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 120, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __pyx_t_4 = PyList_New(3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 110, __pyx_L1_error)
+    __pyx_t_4 = PyList_New(3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 120, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_INCREF(__pyx_int_0);
     __Pyx_GIVEREF(__pyx_int_0);
@@ -2712,21 +2735,21 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
     __Pyx_INCREF(__pyx_int_0);
     __Pyx_GIVEREF(__pyx_int_0);
     PyList_SET_ITEM(__pyx_t_4, 2, __pyx_int_0);
-    __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 110, __pyx_L1_error)
+    __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 120, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_GIVEREF(__pyx_t_4);
     PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_4);
     __pyx_t_4 = 0;
-    __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 110, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 120, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_GetModuleGlobalName(__pyx_t_7, __pyx_n_s_np); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 110, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_7, __pyx_n_s_np); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 120, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
-    __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_float32); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 110, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_float32); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 120, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-    if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_dtype, __pyx_t_8) < 0) __PYX_ERR(0, 110, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_dtype, __pyx_t_8) < 0) __PYX_ERR(0, 120, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-    __pyx_t_8 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_6, __pyx_t_4); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 110, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_6, __pyx_t_4); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 120, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
@@ -2735,7 +2758,7 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
     __pyx_t_8 = 0;
     goto __pyx_L0;
 
-    /* "periodfind/ls.pyx":109
+    /* "periodfind/ls.pyx":119
  * 
  *         # Make sure the number of times and mags matches
  *         if len(times) != len(mags):             # <<<<<<<<<<<<<<
@@ -2744,7 +2767,7 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
  */
   }
 
-  /* "periodfind/ls.pyx":115
+  /* "periodfind/ls.pyx":125
  *         cdef vector[float*] times_ptrs
  *         cdef vector[size_t] times_lens
  *         for time_obj in times:             # <<<<<<<<<<<<<<
@@ -2753,28 +2776,28 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
  */
   if (unlikely(__pyx_v_times == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
-    __PYX_ERR(0, 115, __pyx_L1_error)
+    __PYX_ERR(0, 125, __pyx_L1_error)
   }
   __pyx_t_8 = __pyx_v_times; __Pyx_INCREF(__pyx_t_8); __pyx_t_2 = 0;
   for (;;) {
     if (__pyx_t_2 >= PyList_GET_SIZE(__pyx_t_8)) break;
     #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-    __pyx_t_4 = PyList_GET_ITEM(__pyx_t_8, __pyx_t_2); __Pyx_INCREF(__pyx_t_4); __pyx_t_2++; if (unlikely(0 < 0)) __PYX_ERR(0, 115, __pyx_L1_error)
+    __pyx_t_4 = PyList_GET_ITEM(__pyx_t_8, __pyx_t_2); __Pyx_INCREF(__pyx_t_4); __pyx_t_2++; if (unlikely(0 < 0)) __PYX_ERR(0, 125, __pyx_L1_error)
     #else
-    __pyx_t_4 = PySequence_ITEM(__pyx_t_8, __pyx_t_2); __pyx_t_2++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 115, __pyx_L1_error)
+    __pyx_t_4 = PySequence_ITEM(__pyx_t_8, __pyx_t_2); __pyx_t_2++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 125, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     #endif
     __Pyx_XDECREF_SET(__pyx_v_time_obj, __pyx_t_4);
     __pyx_t_4 = 0;
 
-    /* "periodfind/ls.pyx":116
+    /* "periodfind/ls.pyx":126
  *         cdef vector[size_t] times_lens
  *         for time_obj in times:
  *             time_arr = time_obj             # <<<<<<<<<<<<<<
  *             times_ptrs.push_back(&time_arr[0])
  *             times_lens.push_back(len(time_arr))
  */
-    if (!(likely(((__pyx_v_time_obj) == Py_None) || likely(__Pyx_TypeTest(__pyx_v_time_obj, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 116, __pyx_L1_error)
+    if (!(likely(((__pyx_v_time_obj) == Py_None) || likely(__Pyx_TypeTest(__pyx_v_time_obj, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 126, __pyx_L1_error)
     __pyx_t_4 = __pyx_v_time_obj;
     __Pyx_INCREF(__pyx_t_4);
     {
@@ -2792,12 +2815,12 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
         __pyx_t_10 = __pyx_t_11 = __pyx_t_12 = 0;
       }
       __pyx_pybuffernd_time_arr.diminfo[0].strides = __pyx_pybuffernd_time_arr.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_time_arr.diminfo[0].shape = __pyx_pybuffernd_time_arr.rcbuffer->pybuffer.shape[0];
-      if (unlikely(__pyx_t_9 < 0)) __PYX_ERR(0, 116, __pyx_L1_error)
+      if (unlikely(__pyx_t_9 < 0)) __PYX_ERR(0, 126, __pyx_L1_error)
     }
     __Pyx_XDECREF_SET(__pyx_v_time_arr, ((PyArrayObject *)__pyx_t_4));
     __pyx_t_4 = 0;
 
-    /* "periodfind/ls.pyx":117
+    /* "periodfind/ls.pyx":127
  *         for time_obj in times:
  *             time_arr = time_obj
  *             times_ptrs.push_back(&time_arr[0])             # <<<<<<<<<<<<<<
@@ -2812,31 +2835,31 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
     } else if (unlikely(__pyx_t_13 >= __pyx_pybuffernd_time_arr.diminfo[0].shape)) __pyx_t_9 = 0;
     if (unlikely(__pyx_t_9 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_9);
-      __PYX_ERR(0, 117, __pyx_L1_error)
+      __PYX_ERR(0, 127, __pyx_L1_error)
     }
     try {
       __pyx_v_times_ptrs.push_back((&(*__Pyx_BufPtrStrided1d(__pyx_t_5numpy_float32_t *, __pyx_pybuffernd_time_arr.rcbuffer->pybuffer.buf, __pyx_t_13, __pyx_pybuffernd_time_arr.diminfo[0].strides))));
     } catch(...) {
       __Pyx_CppExn2PyErr();
-      __PYX_ERR(0, 117, __pyx_L1_error)
+      __PYX_ERR(0, 127, __pyx_L1_error)
     }
 
-    /* "periodfind/ls.pyx":118
+    /* "periodfind/ls.pyx":128
  *             time_arr = time_obj
  *             times_ptrs.push_back(&time_arr[0])
  *             times_lens.push_back(len(time_arr))             # <<<<<<<<<<<<<<
  * 
  *         mags_use = []
  */
-    __pyx_t_1 = PyObject_Length(((PyObject *)__pyx_v_time_arr)); if (unlikely(__pyx_t_1 == ((Py_ssize_t)-1))) __PYX_ERR(0, 118, __pyx_L1_error)
+    __pyx_t_1 = PyObject_Length(((PyObject *)__pyx_v_time_arr)); if (unlikely(__pyx_t_1 == ((Py_ssize_t)-1))) __PYX_ERR(0, 128, __pyx_L1_error)
     try {
       __pyx_cur_scope->__pyx_v_times_lens.push_back(__pyx_t_1);
     } catch(...) {
       __Pyx_CppExn2PyErr();
-      __PYX_ERR(0, 118, __pyx_L1_error)
+      __PYX_ERR(0, 128, __pyx_L1_error)
     }
 
-    /* "periodfind/ls.pyx":115
+    /* "periodfind/ls.pyx":125
  *         cdef vector[float*] times_ptrs
  *         cdef vector[size_t] times_lens
  *         for time_obj in times:             # <<<<<<<<<<<<<<
@@ -2846,29 +2869,29 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
   }
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
 
-  /* "periodfind/ls.pyx":120
+  /* "periodfind/ls.pyx":130
  *             times_lens.push_back(len(time_arr))
  * 
  *         mags_use = []             # <<<<<<<<<<<<<<
  *         if normalize:
  *             for mag in mags:
  */
-  __pyx_t_8 = PyList_New(0); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 120, __pyx_L1_error)
+  __pyx_t_8 = PyList_New(0); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 130, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
   __pyx_v_mags_use = ((PyObject*)__pyx_t_8);
   __pyx_t_8 = 0;
 
-  /* "periodfind/ls.pyx":121
+  /* "periodfind/ls.pyx":131
  * 
  *         mags_use = []
  *         if normalize:             # <<<<<<<<<<<<<<
  *             for mag in mags:
  *                 min_v = np.min(mag)
  */
-  __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_v_normalize); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 121, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_v_normalize); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 131, __pyx_L1_error)
   if (__pyx_t_3) {
 
-    /* "periodfind/ls.pyx":122
+    /* "periodfind/ls.pyx":132
  *         mags_use = []
  *         if normalize:
  *             for mag in mags:             # <<<<<<<<<<<<<<
@@ -2877,30 +2900,30 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
  */
     if (unlikely(__pyx_v_mags == Py_None)) {
       PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
-      __PYX_ERR(0, 122, __pyx_L1_error)
+      __PYX_ERR(0, 132, __pyx_L1_error)
     }
     __pyx_t_8 = __pyx_v_mags; __Pyx_INCREF(__pyx_t_8); __pyx_t_2 = 0;
     for (;;) {
       if (__pyx_t_2 >= PyList_GET_SIZE(__pyx_t_8)) break;
       #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-      __pyx_t_4 = PyList_GET_ITEM(__pyx_t_8, __pyx_t_2); __Pyx_INCREF(__pyx_t_4); __pyx_t_2++; if (unlikely(0 < 0)) __PYX_ERR(0, 122, __pyx_L1_error)
+      __pyx_t_4 = PyList_GET_ITEM(__pyx_t_8, __pyx_t_2); __Pyx_INCREF(__pyx_t_4); __pyx_t_2++; if (unlikely(0 < 0)) __PYX_ERR(0, 132, __pyx_L1_error)
       #else
-      __pyx_t_4 = PySequence_ITEM(__pyx_t_8, __pyx_t_2); __pyx_t_2++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 122, __pyx_L1_error)
+      __pyx_t_4 = PySequence_ITEM(__pyx_t_8, __pyx_t_2); __pyx_t_2++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 132, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       #endif
       __Pyx_XDECREF_SET(__pyx_v_mag, __pyx_t_4);
       __pyx_t_4 = 0;
 
-      /* "periodfind/ls.pyx":123
+      /* "periodfind/ls.pyx":133
  *         if normalize:
  *             for mag in mags:
  *                 min_v = np.min(mag)             # <<<<<<<<<<<<<<
  *                 max_v = np.max(mag)
  *                 scaled = ((mag - min_v) / (max_v - min_v)) * 0.999 + 5e-4
  */
-      __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_n_s_np); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 123, __pyx_L1_error)
+      __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_n_s_np); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 133, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_6);
-      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_min); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 123, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_min); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 133, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       __pyx_t_6 = NULL;
@@ -2915,22 +2938,22 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
       }
       __pyx_t_4 = (__pyx_t_6) ? __Pyx_PyObject_Call2Args(__pyx_t_5, __pyx_t_6, __pyx_v_mag) : __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_v_mag);
       __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-      if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 123, __pyx_L1_error)
+      if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 133, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_XDECREF_SET(__pyx_v_min_v, __pyx_t_4);
       __pyx_t_4 = 0;
 
-      /* "periodfind/ls.pyx":124
+      /* "periodfind/ls.pyx":134
  *             for mag in mags:
  *                 min_v = np.min(mag)
  *                 max_v = np.max(mag)             # <<<<<<<<<<<<<<
  *                 scaled = ((mag - min_v) / (max_v - min_v)) * 0.999 + 5e-4
  *                 mags_use.append(scaled)
  */
-      __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_np); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 124, __pyx_L1_error)
+      __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_np); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 134, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
-      __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_max); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 124, __pyx_L1_error)
+      __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_max); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 134, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __pyx_t_5 = NULL;
@@ -2945,46 +2968,46 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
       }
       __pyx_t_4 = (__pyx_t_5) ? __Pyx_PyObject_Call2Args(__pyx_t_6, __pyx_t_5, __pyx_v_mag) : __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_v_mag);
       __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
-      if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 124, __pyx_L1_error)
+      if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 134, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_XDECREF_SET(__pyx_v_max_v, __pyx_t_4);
       __pyx_t_4 = 0;
 
-      /* "periodfind/ls.pyx":125
+      /* "periodfind/ls.pyx":135
  *                 min_v = np.min(mag)
  *                 max_v = np.max(mag)
  *                 scaled = ((mag - min_v) / (max_v - min_v)) * 0.999 + 5e-4             # <<<<<<<<<<<<<<
  *                 mags_use.append(scaled)
  *         else:
  */
-      __pyx_t_4 = PyNumber_Subtract(__pyx_v_mag, __pyx_v_min_v); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 125, __pyx_L1_error)
+      __pyx_t_4 = PyNumber_Subtract(__pyx_v_mag, __pyx_v_min_v); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 135, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
-      __pyx_t_6 = PyNumber_Subtract(__pyx_v_max_v, __pyx_v_min_v); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 125, __pyx_L1_error)
+      __pyx_t_6 = PyNumber_Subtract(__pyx_v_max_v, __pyx_v_min_v); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 135, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_6);
-      __pyx_t_5 = __Pyx_PyNumber_Divide(__pyx_t_4, __pyx_t_6); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 125, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyNumber_Divide(__pyx_t_4, __pyx_t_6); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 135, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      __pyx_t_6 = PyNumber_Multiply(__pyx_t_5, __pyx_float_0_999); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 125, __pyx_L1_error)
+      __pyx_t_6 = PyNumber_Multiply(__pyx_t_5, __pyx_float_0_999); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 135, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __pyx_t_5 = __Pyx_PyFloat_AddObjC(__pyx_t_6, __pyx_float_5eneg_4, 5e-4, 0, 0); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 125, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyFloat_AddObjC(__pyx_t_6, __pyx_float_5eneg_4, 5e-4, 0, 0); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 135, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_XDECREF_SET(__pyx_v_scaled, __pyx_t_5);
       __pyx_t_5 = 0;
 
-      /* "periodfind/ls.pyx":126
+      /* "periodfind/ls.pyx":136
  *                 max_v = np.max(mag)
  *                 scaled = ((mag - min_v) / (max_v - min_v)) * 0.999 + 5e-4
  *                 mags_use.append(scaled)             # <<<<<<<<<<<<<<
  *         else:
  *             mags_use = mags
  */
-      __pyx_t_14 = __Pyx_PyList_Append(__pyx_v_mags_use, __pyx_v_scaled); if (unlikely(__pyx_t_14 == ((int)-1))) __PYX_ERR(0, 126, __pyx_L1_error)
+      __pyx_t_14 = __Pyx_PyList_Append(__pyx_v_mags_use, __pyx_v_scaled); if (unlikely(__pyx_t_14 == ((int)-1))) __PYX_ERR(0, 136, __pyx_L1_error)
 
-      /* "periodfind/ls.pyx":122
+      /* "periodfind/ls.pyx":132
  *         mags_use = []
  *         if normalize:
  *             for mag in mags:             # <<<<<<<<<<<<<<
@@ -2994,7 +3017,7 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
     }
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
 
-    /* "periodfind/ls.pyx":121
+    /* "periodfind/ls.pyx":131
  * 
  *         mags_use = []
  *         if normalize:             # <<<<<<<<<<<<<<
@@ -3004,7 +3027,7 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
     goto __pyx_L6;
   }
 
-  /* "periodfind/ls.pyx":128
+  /* "periodfind/ls.pyx":138
  *                 mags_use.append(scaled)
  *         else:
  *             mags_use = mags             # <<<<<<<<<<<<<<
@@ -3017,7 +3040,7 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
   }
   __pyx_L6:;
 
-  /* "periodfind/ls.pyx":133
+  /* "periodfind/ls.pyx":143
  *         cdef vector[float*] mags_ptrs
  *         cdef vector[size_t] mags_lens
  *         for mag_obj in mags_use:             # <<<<<<<<<<<<<<
@@ -3026,28 +3049,28 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
  */
   if (unlikely(__pyx_v_mags_use == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
-    __PYX_ERR(0, 133, __pyx_L1_error)
+    __PYX_ERR(0, 143, __pyx_L1_error)
   }
   __pyx_t_8 = __pyx_v_mags_use; __Pyx_INCREF(__pyx_t_8); __pyx_t_2 = 0;
   for (;;) {
     if (__pyx_t_2 >= PyList_GET_SIZE(__pyx_t_8)) break;
     #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-    __pyx_t_5 = PyList_GET_ITEM(__pyx_t_8, __pyx_t_2); __Pyx_INCREF(__pyx_t_5); __pyx_t_2++; if (unlikely(0 < 0)) __PYX_ERR(0, 133, __pyx_L1_error)
+    __pyx_t_5 = PyList_GET_ITEM(__pyx_t_8, __pyx_t_2); __Pyx_INCREF(__pyx_t_5); __pyx_t_2++; if (unlikely(0 < 0)) __PYX_ERR(0, 143, __pyx_L1_error)
     #else
-    __pyx_t_5 = PySequence_ITEM(__pyx_t_8, __pyx_t_2); __pyx_t_2++; if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 133, __pyx_L1_error)
+    __pyx_t_5 = PySequence_ITEM(__pyx_t_8, __pyx_t_2); __pyx_t_2++; if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 143, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     #endif
     __Pyx_XDECREF_SET(__pyx_v_mag_obj, __pyx_t_5);
     __pyx_t_5 = 0;
 
-    /* "periodfind/ls.pyx":134
+    /* "periodfind/ls.pyx":144
  *         cdef vector[size_t] mags_lens
  *         for mag_obj in mags_use:
  *             mag_arr = mag_obj             # <<<<<<<<<<<<<<
  *             mags_ptrs.push_back(&mag_arr[0])
  *             mags_lens.push_back(len(mag_arr))
  */
-    if (!(likely(((__pyx_v_mag_obj) == Py_None) || likely(__Pyx_TypeTest(__pyx_v_mag_obj, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 134, __pyx_L1_error)
+    if (!(likely(((__pyx_v_mag_obj) == Py_None) || likely(__Pyx_TypeTest(__pyx_v_mag_obj, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 144, __pyx_L1_error)
     __pyx_t_5 = __pyx_v_mag_obj;
     __Pyx_INCREF(__pyx_t_5);
     {
@@ -3065,12 +3088,12 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
         __pyx_t_12 = __pyx_t_11 = __pyx_t_10 = 0;
       }
       __pyx_pybuffernd_mag_arr.diminfo[0].strides = __pyx_pybuffernd_mag_arr.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_mag_arr.diminfo[0].shape = __pyx_pybuffernd_mag_arr.rcbuffer->pybuffer.shape[0];
-      if (unlikely(__pyx_t_9 < 0)) __PYX_ERR(0, 134, __pyx_L1_error)
+      if (unlikely(__pyx_t_9 < 0)) __PYX_ERR(0, 144, __pyx_L1_error)
     }
     __Pyx_XDECREF_SET(__pyx_v_mag_arr, ((PyArrayObject *)__pyx_t_5));
     __pyx_t_5 = 0;
 
-    /* "periodfind/ls.pyx":135
+    /* "periodfind/ls.pyx":145
  *         for mag_obj in mags_use:
  *             mag_arr = mag_obj
  *             mags_ptrs.push_back(&mag_arr[0])             # <<<<<<<<<<<<<<
@@ -3085,31 +3108,31 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
     } else if (unlikely(__pyx_t_13 >= __pyx_pybuffernd_mag_arr.diminfo[0].shape)) __pyx_t_9 = 0;
     if (unlikely(__pyx_t_9 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_9);
-      __PYX_ERR(0, 135, __pyx_L1_error)
+      __PYX_ERR(0, 145, __pyx_L1_error)
     }
     try {
       __pyx_v_mags_ptrs.push_back((&(*__Pyx_BufPtrStrided1d(__pyx_t_5numpy_float32_t *, __pyx_pybuffernd_mag_arr.rcbuffer->pybuffer.buf, __pyx_t_13, __pyx_pybuffernd_mag_arr.diminfo[0].strides))));
     } catch(...) {
       __Pyx_CppExn2PyErr();
-      __PYX_ERR(0, 135, __pyx_L1_error)
+      __PYX_ERR(0, 145, __pyx_L1_error)
     }
 
-    /* "periodfind/ls.pyx":136
+    /* "periodfind/ls.pyx":146
  *             mag_arr = mag_obj
  *             mags_ptrs.push_back(&mag_arr[0])
  *             mags_lens.push_back(len(mag_arr))             # <<<<<<<<<<<<<<
  * 
  *         # Make sure the individual lengths match
  */
-    __pyx_t_1 = PyObject_Length(((PyObject *)__pyx_v_mag_arr)); if (unlikely(__pyx_t_1 == ((Py_ssize_t)-1))) __PYX_ERR(0, 136, __pyx_L1_error)
+    __pyx_t_1 = PyObject_Length(((PyObject *)__pyx_v_mag_arr)); if (unlikely(__pyx_t_1 == ((Py_ssize_t)-1))) __PYX_ERR(0, 146, __pyx_L1_error)
     try {
       __pyx_cur_scope->__pyx_v_mags_lens.push_back(__pyx_t_1);
     } catch(...) {
       __Pyx_CppExn2PyErr();
-      __PYX_ERR(0, 136, __pyx_L1_error)
+      __PYX_ERR(0, 146, __pyx_L1_error)
     }
 
-    /* "periodfind/ls.pyx":133
+    /* "periodfind/ls.pyx":143
  *         cdef vector[float*] mags_ptrs
  *         cdef vector[size_t] mags_lens
  *         for mag_obj in mags_use:             # <<<<<<<<<<<<<<
@@ -3119,23 +3142,23 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
   }
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
 
-  /* "periodfind/ls.pyx":139
+  /* "periodfind/ls.pyx":149
  * 
  *         # Make sure the individual lengths match
  *         if any(t != m for t, m in zip(times_lens, mags_lens)):             # <<<<<<<<<<<<<<
  *             return np.zeros([0, 0, 0], dtype=np.float32)
  * 
  */
-  __pyx_t_8 = __pyx_pf_10periodfind_2ls_11LombScargle_4calc_genexpr(((PyObject*)__pyx_cur_scope)); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 139, __pyx_L1_error)
+  __pyx_t_8 = __pyx_pf_10periodfind_2ls_11LombScargle_4calc_genexpr(((PyObject*)__pyx_cur_scope)); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 149, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
-  __pyx_t_5 = __Pyx_Generator_Next(__pyx_t_8); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 139, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_Generator_Next(__pyx_t_8); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 149, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-  __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 139, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 149, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   if (__pyx_t_3) {
 
-    /* "periodfind/ls.pyx":140
+    /* "periodfind/ls.pyx":150
  *         # Make sure the individual lengths match
  *         if any(t != m for t, m in zip(times_lens, mags_lens)):
  *             return np.zeros([0, 0, 0], dtype=np.float32)             # <<<<<<<<<<<<<<
@@ -3143,12 +3166,12 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
  *         n_per = len(periods)
  */
     __Pyx_XDECREF(__pyx_r);
-    __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_np); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 140, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_np); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 150, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_zeros); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 140, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_zeros); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 150, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    __pyx_t_5 = PyList_New(3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 140, __pyx_L1_error)
+    __pyx_t_5 = PyList_New(3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 150, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_INCREF(__pyx_int_0);
     __Pyx_GIVEREF(__pyx_int_0);
@@ -3159,21 +3182,21 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
     __Pyx_INCREF(__pyx_int_0);
     __Pyx_GIVEREF(__pyx_int_0);
     PyList_SET_ITEM(__pyx_t_5, 2, __pyx_int_0);
-    __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 140, __pyx_L1_error)
+    __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 150, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_GIVEREF(__pyx_t_5);
     PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_5);
     __pyx_t_5 = 0;
-    __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 140, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 150, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 140, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 150, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
-    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_float32); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 140, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_float32); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 150, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_dtype, __pyx_t_7) < 0) __PYX_ERR(0, 140, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_dtype, __pyx_t_7) < 0) __PYX_ERR(0, 150, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-    __pyx_t_7 = __Pyx_PyObject_Call(__pyx_t_8, __pyx_t_6, __pyx_t_5); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 140, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_Call(__pyx_t_8, __pyx_t_6, __pyx_t_5); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 150, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
@@ -3182,7 +3205,7 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
     __pyx_t_7 = 0;
     goto __pyx_L0;
 
-    /* "periodfind/ls.pyx":139
+    /* "periodfind/ls.pyx":149
  * 
  *         # Make sure the individual lengths match
  *         if any(t != m for t, m in zip(times_lens, mags_lens)):             # <<<<<<<<<<<<<<
@@ -3191,27 +3214,27 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
  */
   }
 
-  /* "periodfind/ls.pyx":142
+  /* "periodfind/ls.pyx":152
  *             return np.zeros([0, 0, 0], dtype=np.float32)
  * 
  *         n_per = len(periods)             # <<<<<<<<<<<<<<
  *         n_pdt = len(period_dts)
  * 
  */
-  __pyx_t_2 = PyObject_Length(((PyObject *)__pyx_v_periods)); if (unlikely(__pyx_t_2 == ((Py_ssize_t)-1))) __PYX_ERR(0, 142, __pyx_L1_error)
+  __pyx_t_2 = PyObject_Length(((PyObject *)__pyx_v_periods)); if (unlikely(__pyx_t_2 == ((Py_ssize_t)-1))) __PYX_ERR(0, 152, __pyx_L1_error)
   __pyx_v_n_per = __pyx_t_2;
 
-  /* "periodfind/ls.pyx":143
+  /* "periodfind/ls.pyx":153
  * 
  *         n_per = len(periods)
  *         n_pdt = len(period_dts)             # <<<<<<<<<<<<<<
  * 
  *         cdef float* ls = self.ls.CalcLSBatched(
  */
-  __pyx_t_2 = PyObject_Length(((PyObject *)__pyx_v_period_dts)); if (unlikely(__pyx_t_2 == ((Py_ssize_t)-1))) __PYX_ERR(0, 143, __pyx_L1_error)
+  __pyx_t_2 = PyObject_Length(((PyObject *)__pyx_v_period_dts)); if (unlikely(__pyx_t_2 == ((Py_ssize_t)-1))) __PYX_ERR(0, 153, __pyx_L1_error)
   __pyx_v_n_pdt = __pyx_t_2;
 
-  /* "periodfind/ls.pyx":147
+  /* "periodfind/ls.pyx":157
  *         cdef float* ls = self.ls.CalcLSBatched(
  *             times_ptrs, mags_ptrs, times_lens,
  *             &periods[0], &period_dts[0], n_per, n_pdt,             # <<<<<<<<<<<<<<
@@ -3226,7 +3249,7 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
   } else if (unlikely(__pyx_t_13 >= __pyx_pybuffernd_periods.diminfo[0].shape)) __pyx_t_9 = 0;
   if (unlikely(__pyx_t_9 != -1)) {
     __Pyx_RaiseBufferIndexError(__pyx_t_9);
-    __PYX_ERR(0, 147, __pyx_L1_error)
+    __PYX_ERR(0, 157, __pyx_L1_error)
   }
   __pyx_t_15 = 0;
   __pyx_t_9 = -1;
@@ -3236,10 +3259,10 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
   } else if (unlikely(__pyx_t_15 >= __pyx_pybuffernd_period_dts.diminfo[0].shape)) __pyx_t_9 = 0;
   if (unlikely(__pyx_t_9 != -1)) {
     __Pyx_RaiseBufferIndexError(__pyx_t_9);
-    __PYX_ERR(0, 147, __pyx_L1_error)
+    __PYX_ERR(0, 157, __pyx_L1_error)
   }
 
-  /* "periodfind/ls.pyx":145
+  /* "periodfind/ls.pyx":155
  *         n_pdt = len(period_dts)
  * 
  *         cdef float* ls = self.ls.CalcLSBatched(             # <<<<<<<<<<<<<<
@@ -3248,7 +3271,7 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
  */
   __pyx_v_ls = __pyx_v_self->ls->CalcLSBatched(__pyx_v_times_ptrs, __pyx_v_mags_ptrs, __pyx_cur_scope->__pyx_v_times_lens, (&(*__Pyx_BufPtrStrided1d(__pyx_t_5numpy_float32_t *, __pyx_pybuffernd_periods.rcbuffer->pybuffer.buf, __pyx_t_13, __pyx_pybuffernd_periods.diminfo[0].strides))), (&(*__Pyx_BufPtrStrided1d(__pyx_t_5numpy_float32_t *, __pyx_pybuffernd_period_dts.rcbuffer->pybuffer.buf, __pyx_t_15, __pyx_pybuffernd_period_dts.diminfo[0].strides))), __pyx_v_n_per, __pyx_v_n_pdt);
 
-  /* "periodfind/ls.pyx":151
+  /* "periodfind/ls.pyx":161
  * 
  *         cdef np.npy_intp dim[3]
  *         dim[0] = len(times)             # <<<<<<<<<<<<<<
@@ -3257,12 +3280,12 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
  */
   if (unlikely(__pyx_v_times == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
-    __PYX_ERR(0, 151, __pyx_L1_error)
+    __PYX_ERR(0, 161, __pyx_L1_error)
   }
-  __pyx_t_2 = PyList_GET_SIZE(__pyx_v_times); if (unlikely(__pyx_t_2 == ((Py_ssize_t)-1))) __PYX_ERR(0, 151, __pyx_L1_error)
+  __pyx_t_2 = PyList_GET_SIZE(__pyx_v_times); if (unlikely(__pyx_t_2 == ((Py_ssize_t)-1))) __PYX_ERR(0, 161, __pyx_L1_error)
   (__pyx_v_dim[0]) = __pyx_t_2;
 
-  /* "periodfind/ls.pyx":152
+  /* "periodfind/ls.pyx":162
  *         cdef np.npy_intp dim[3]
  *         dim[0] = len(times)
  *         dim[1] = n_per             # <<<<<<<<<<<<<<
@@ -3271,7 +3294,7 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
  */
   (__pyx_v_dim[1]) = __pyx_v_n_per;
 
-  /* "periodfind/ls.pyx":153
+  /* "periodfind/ls.pyx":163
  *         dim[0] = len(times)
  *         dim[1] = n_per
  *         dim[2] = n_pdt             # <<<<<<<<<<<<<<
@@ -3280,22 +3303,22 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
  */
   (__pyx_v_dim[2]) = __pyx_v_n_pdt;
 
-  /* "periodfind/ls.pyx":156
+  /* "periodfind/ls.pyx":166
  * 
  *         cdef np.ndarray[ndim=3, dtype=np.float32_t] ls_ndarr = \
  *             np.PyArray_SimpleNewFromData(3, dim, np.NPY_FLOAT, ls)             # <<<<<<<<<<<<<<
  * 
  *         if output == 'stats':
  */
-  __pyx_t_7 = PyArray_SimpleNewFromData(3, __pyx_v_dim, NPY_FLOAT, __pyx_v_ls); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 156, __pyx_L1_error)
+  __pyx_t_7 = PyArray_SimpleNewFromData(3, __pyx_v_dim, NPY_FLOAT, __pyx_v_ls); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 166, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
-  if (!(likely(((__pyx_t_7) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_7, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 156, __pyx_L1_error)
+  if (!(likely(((__pyx_t_7) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_7, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 166, __pyx_L1_error)
   __pyx_t_16 = ((PyArrayObject *)__pyx_t_7);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_ls_ndarr.rcbuffer->pybuffer, (PyObject*)__pyx_t_16, &__Pyx_TypeInfo_nn___pyx_t_5numpy_float32_t, PyBUF_FORMAT| PyBUF_STRIDES, 3, 0, __pyx_stack) == -1)) {
       __pyx_v_ls_ndarr = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_ls_ndarr.rcbuffer->pybuffer.buf = NULL;
-      __PYX_ERR(0, 155, __pyx_L1_error)
+      __PYX_ERR(0, 165, __pyx_L1_error)
     } else {__pyx_pybuffernd_ls_ndarr.diminfo[0].strides = __pyx_pybuffernd_ls_ndarr.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_ls_ndarr.diminfo[0].shape = __pyx_pybuffernd_ls_ndarr.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_ls_ndarr.diminfo[1].strides = __pyx_pybuffernd_ls_ndarr.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_ls_ndarr.diminfo[1].shape = __pyx_pybuffernd_ls_ndarr.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_ls_ndarr.diminfo[2].strides = __pyx_pybuffernd_ls_ndarr.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_ls_ndarr.diminfo[2].shape = __pyx_pybuffernd_ls_ndarr.rcbuffer->pybuffer.shape[2];
     }
   }
@@ -3303,135 +3326,148 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
   __pyx_v_ls_ndarr = ((PyArrayObject *)__pyx_t_7);
   __pyx_t_7 = 0;
 
-  /* "periodfind/ls.pyx":158
+  /* "periodfind/ls.pyx":168
  *             np.PyArray_SimpleNewFromData(3, dim, np.NPY_FLOAT, ls)
  * 
  *         if output == 'stats':             # <<<<<<<<<<<<<<
  *             all_stats = []
  *             for i in range(len(times)):
  */
-  __pyx_t_3 = (__Pyx_PyUnicode_Equals(__pyx_v_output, __pyx_n_u_stats, Py_EQ)); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 158, __pyx_L1_error)
+  __pyx_t_3 = (__Pyx_PyUnicode_Equals(__pyx_v_output, __pyx_n_u_stats, Py_EQ)); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 168, __pyx_L1_error)
   if (__pyx_t_3) {
 
-    /* "periodfind/ls.pyx":159
+    /* "periodfind/ls.pyx":169
  * 
  *         if output == 'stats':
  *             all_stats = []             # <<<<<<<<<<<<<<
  *             for i in range(len(times)):
  *                 stats = Statistics.statistics_from_data(
  */
-    __pyx_t_7 = PyList_New(0); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 159, __pyx_L1_error)
+    __pyx_t_7 = PyList_New(0); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 169, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __pyx_v_all_stats = ((PyObject*)__pyx_t_7);
     __pyx_t_7 = 0;
 
-    /* "periodfind/ls.pyx":160
+    /* "periodfind/ls.pyx":170
  *         if output == 'stats':
  *             all_stats = []
  *             for i in range(len(times)):             # <<<<<<<<<<<<<<
  *                 stats = Statistics.statistics_from_data(
- *                     ls_ndarr,
+ *                     ls_ndarr[i],
  */
     if (unlikely(__pyx_v_times == Py_None)) {
       PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
-      __PYX_ERR(0, 160, __pyx_L1_error)
+      __PYX_ERR(0, 170, __pyx_L1_error)
     }
-    __pyx_t_2 = PyList_GET_SIZE(__pyx_v_times); if (unlikely(__pyx_t_2 == ((Py_ssize_t)-1))) __PYX_ERR(0, 160, __pyx_L1_error)
+    __pyx_t_2 = PyList_GET_SIZE(__pyx_v_times); if (unlikely(__pyx_t_2 == ((Py_ssize_t)-1))) __PYX_ERR(0, 170, __pyx_L1_error)
     __pyx_t_1 = __pyx_t_2;
     for (__pyx_t_17 = 0; __pyx_t_17 < __pyx_t_1; __pyx_t_17+=1) {
       __pyx_v_i = __pyx_t_17;
 
-      /* "periodfind/ls.pyx":161
+      /* "periodfind/ls.pyx":171
  *             all_stats = []
  *             for i in range(len(times)):
  *                 stats = Statistics.statistics_from_data(             # <<<<<<<<<<<<<<
- *                     ls_ndarr,
+ *                     ls_ndarr[i],
  *                     [periods, period_dts],
  */
-      __Pyx_GetModuleGlobalName(__pyx_t_7, __pyx_n_s_Statistics); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 161, __pyx_L1_error)
+      __Pyx_GetModuleGlobalName(__pyx_t_7, __pyx_n_s_Statistics); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 171, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_7);
-      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_statistics_from_data); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 161, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_statistics_from_data); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 171, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
 
-      /* "periodfind/ls.pyx":163
+      /* "periodfind/ls.pyx":172
+ *             for i in range(len(times)):
  *                 stats = Statistics.statistics_from_data(
- *                     ls_ndarr,
- *                     [periods, period_dts],             # <<<<<<<<<<<<<<
- *                     n=n_stats,
- *                     significance_type=significance_type,
+ *                     ls_ndarr[i],             # <<<<<<<<<<<<<<
+ *                     [periods, period_dts],
+ *                     True,
  */
-      __pyx_t_7 = PyList_New(2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 163, __pyx_L1_error)
+      __pyx_t_7 = __Pyx_GetItemInt(((PyObject *)__pyx_v_ls_ndarr), __pyx_v_i, Py_ssize_t, 1, PyInt_FromSsize_t, 0, 1, 1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 172, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_7);
+
+      /* "periodfind/ls.pyx":173
+ *                 stats = Statistics.statistics_from_data(
+ *                     ls_ndarr[i],
+ *                     [periods, period_dts],             # <<<<<<<<<<<<<<
+ *                     True,
+ *                     n=n_stats,
+ */
+      __pyx_t_6 = PyList_New(2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 173, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_6);
       __Pyx_INCREF(((PyObject *)__pyx_v_periods));
       __Pyx_GIVEREF(((PyObject *)__pyx_v_periods));
-      PyList_SET_ITEM(__pyx_t_7, 0, ((PyObject *)__pyx_v_periods));
+      PyList_SET_ITEM(__pyx_t_6, 0, ((PyObject *)__pyx_v_periods));
       __Pyx_INCREF(((PyObject *)__pyx_v_period_dts));
       __Pyx_GIVEREF(((PyObject *)__pyx_v_period_dts));
-      PyList_SET_ITEM(__pyx_t_7, 1, ((PyObject *)__pyx_v_period_dts));
+      PyList_SET_ITEM(__pyx_t_6, 1, ((PyObject *)__pyx_v_period_dts));
 
-      /* "periodfind/ls.pyx":161
+      /* "periodfind/ls.pyx":171
  *             all_stats = []
  *             for i in range(len(times)):
  *                 stats = Statistics.statistics_from_data(             # <<<<<<<<<<<<<<
- *                     ls_ndarr,
+ *                     ls_ndarr[i],
  *                     [periods, period_dts],
  */
-      __pyx_t_6 = PyTuple_New(2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 161, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_6);
-      __Pyx_INCREF(((PyObject *)__pyx_v_ls_ndarr));
-      __Pyx_GIVEREF(((PyObject *)__pyx_v_ls_ndarr));
-      PyTuple_SET_ITEM(__pyx_t_6, 0, ((PyObject *)__pyx_v_ls_ndarr));
+      __pyx_t_8 = PyTuple_New(3); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 171, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_8);
       __Pyx_GIVEREF(__pyx_t_7);
-      PyTuple_SET_ITEM(__pyx_t_6, 1, __pyx_t_7);
+      PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_7);
+      __Pyx_GIVEREF(__pyx_t_6);
+      PyTuple_SET_ITEM(__pyx_t_8, 1, __pyx_t_6);
+      __Pyx_INCREF(Py_True);
+      __Pyx_GIVEREF(Py_True);
+      PyTuple_SET_ITEM(__pyx_t_8, 2, Py_True);
       __pyx_t_7 = 0;
+      __pyx_t_6 = 0;
 
-      /* "periodfind/ls.pyx":164
- *                     ls_ndarr,
+      /* "periodfind/ls.pyx":175
  *                     [periods, period_dts],
+ *                     True,
  *                     n=n_stats,             # <<<<<<<<<<<<<<
  *                     significance_type=significance_type,
  *                 )
  */
-      __pyx_t_7 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 164, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_7);
-      if (PyDict_SetItem(__pyx_t_7, __pyx_n_s_n, __pyx_v_n_stats) < 0) __PYX_ERR(0, 164, __pyx_L1_error)
+      __pyx_t_6 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 175, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_6);
+      if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_n, __pyx_v_n_stats) < 0) __PYX_ERR(0, 175, __pyx_L1_error)
 
-      /* "periodfind/ls.pyx":165
- *                     [periods, period_dts],
+      /* "periodfind/ls.pyx":176
+ *                     True,
  *                     n=n_stats,
  *                     significance_type=significance_type,             # <<<<<<<<<<<<<<
  *                 )
  * 
  */
-      if (PyDict_SetItem(__pyx_t_7, __pyx_n_s_significance_type, __pyx_v_significance_type) < 0) __PYX_ERR(0, 164, __pyx_L1_error)
+      if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_significance_type, __pyx_v_significance_type) < 0) __PYX_ERR(0, 175, __pyx_L1_error)
 
-      /* "periodfind/ls.pyx":161
+      /* "periodfind/ls.pyx":171
  *             all_stats = []
  *             for i in range(len(times)):
  *                 stats = Statistics.statistics_from_data(             # <<<<<<<<<<<<<<
- *                     ls_ndarr,
+ *                     ls_ndarr[i],
  *                     [periods, period_dts],
  */
-      __pyx_t_8 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_6, __pyx_t_7); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 161, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_8);
+      __pyx_t_7 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_8, __pyx_t_6); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 171, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_7);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-      __Pyx_XDECREF_SET(__pyx_v_stats, __pyx_t_8);
-      __pyx_t_8 = 0;
+      __Pyx_XDECREF_SET(__pyx_v_stats, __pyx_t_7);
+      __pyx_t_7 = 0;
 
-      /* "periodfind/ls.pyx":168
+      /* "periodfind/ls.pyx":179
  *                 )
  * 
  *                 all_stats.append(stats)             # <<<<<<<<<<<<<<
  * 
  *             return all_stats
  */
-      __pyx_t_14 = __Pyx_PyList_Append(__pyx_v_all_stats, __pyx_v_stats); if (unlikely(__pyx_t_14 == ((int)-1))) __PYX_ERR(0, 168, __pyx_L1_error)
+      __pyx_t_14 = __Pyx_PyList_Append(__pyx_v_all_stats, __pyx_v_stats); if (unlikely(__pyx_t_14 == ((int)-1))) __PYX_ERR(0, 179, __pyx_L1_error)
     }
 
-    /* "periodfind/ls.pyx":170
+    /* "periodfind/ls.pyx":181
  *                 all_stats.append(stats)
  * 
  *             return all_stats             # <<<<<<<<<<<<<<
@@ -3443,7 +3479,7 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
     __pyx_r = __pyx_v_all_stats;
     goto __pyx_L0;
 
-    /* "periodfind/ls.pyx":158
+    /* "periodfind/ls.pyx":168
  *             np.PyArray_SimpleNewFromData(3, dim, np.NPY_FLOAT, ls)
  * 
  *         if output == 'stats':             # <<<<<<<<<<<<<<
@@ -3452,17 +3488,17 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
  */
   }
 
-  /* "periodfind/ls.pyx":171
+  /* "periodfind/ls.pyx":182
  * 
  *             return all_stats
  *         elif output == 'periodogram':             # <<<<<<<<<<<<<<
  *             return [Periodogram(data, [periods, period_dts], True)
  *                     for data in ls_ndarr]
  */
-  __pyx_t_3 = (__Pyx_PyUnicode_Equals(__pyx_v_output, __pyx_n_u_periodogram, Py_EQ)); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 171, __pyx_L1_error)
+  __pyx_t_3 = (__Pyx_PyUnicode_Equals(__pyx_v_output, __pyx_n_u_periodogram, Py_EQ)); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 182, __pyx_L1_error)
   if (likely(__pyx_t_3)) {
 
-    /* "periodfind/ls.pyx":172
+    /* "periodfind/ls.pyx":183
  *             return all_stats
  *         elif output == 'periodogram':
  *             return [Periodogram(data, [periods, period_dts], True)             # <<<<<<<<<<<<<<
@@ -3471,10 +3507,10 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
  */
     __Pyx_XDECREF(__pyx_r);
     { /* enter inner scope */
-      __pyx_t_8 = PyList_New(0); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 172, __pyx_L17_error)
-      __Pyx_GOTREF(__pyx_t_8);
+      __pyx_t_7 = PyList_New(0); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 183, __pyx_L17_error)
+      __Pyx_GOTREF(__pyx_t_7);
 
-      /* "periodfind/ls.pyx":173
+      /* "periodfind/ls.pyx":184
  *         elif output == 'periodogram':
  *             return [Periodogram(data, [periods, period_dts], True)
  *                     for data in ls_ndarr]             # <<<<<<<<<<<<<<
@@ -3482,57 +3518,57 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
  *             raise NotImplementedError('Only "stats" output is implemented')
  */
       if (likely(PyList_CheckExact(((PyObject *)__pyx_v_ls_ndarr))) || PyTuple_CheckExact(((PyObject *)__pyx_v_ls_ndarr))) {
-        __pyx_t_7 = ((PyObject *)__pyx_v_ls_ndarr); __Pyx_INCREF(__pyx_t_7); __pyx_t_2 = 0;
+        __pyx_t_6 = ((PyObject *)__pyx_v_ls_ndarr); __Pyx_INCREF(__pyx_t_6); __pyx_t_2 = 0;
         __pyx_t_18 = NULL;
       } else {
-        __pyx_t_2 = -1; __pyx_t_7 = PyObject_GetIter(((PyObject *)__pyx_v_ls_ndarr)); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 173, __pyx_L17_error)
-        __Pyx_GOTREF(__pyx_t_7);
-        __pyx_t_18 = Py_TYPE(__pyx_t_7)->tp_iternext; if (unlikely(!__pyx_t_18)) __PYX_ERR(0, 173, __pyx_L17_error)
+        __pyx_t_2 = -1; __pyx_t_6 = PyObject_GetIter(((PyObject *)__pyx_v_ls_ndarr)); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 184, __pyx_L17_error)
+        __Pyx_GOTREF(__pyx_t_6);
+        __pyx_t_18 = Py_TYPE(__pyx_t_6)->tp_iternext; if (unlikely(!__pyx_t_18)) __PYX_ERR(0, 184, __pyx_L17_error)
       }
       for (;;) {
         if (likely(!__pyx_t_18)) {
-          if (likely(PyList_CheckExact(__pyx_t_7))) {
-            if (__pyx_t_2 >= PyList_GET_SIZE(__pyx_t_7)) break;
+          if (likely(PyList_CheckExact(__pyx_t_6))) {
+            if (__pyx_t_2 >= PyList_GET_SIZE(__pyx_t_6)) break;
             #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-            __pyx_t_6 = PyList_GET_ITEM(__pyx_t_7, __pyx_t_2); __Pyx_INCREF(__pyx_t_6); __pyx_t_2++; if (unlikely(0 < 0)) __PYX_ERR(0, 173, __pyx_L17_error)
+            __pyx_t_8 = PyList_GET_ITEM(__pyx_t_6, __pyx_t_2); __Pyx_INCREF(__pyx_t_8); __pyx_t_2++; if (unlikely(0 < 0)) __PYX_ERR(0, 184, __pyx_L17_error)
             #else
-            __pyx_t_6 = PySequence_ITEM(__pyx_t_7, __pyx_t_2); __pyx_t_2++; if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 173, __pyx_L17_error)
-            __Pyx_GOTREF(__pyx_t_6);
+            __pyx_t_8 = PySequence_ITEM(__pyx_t_6, __pyx_t_2); __pyx_t_2++; if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 184, __pyx_L17_error)
+            __Pyx_GOTREF(__pyx_t_8);
             #endif
           } else {
-            if (__pyx_t_2 >= PyTuple_GET_SIZE(__pyx_t_7)) break;
+            if (__pyx_t_2 >= PyTuple_GET_SIZE(__pyx_t_6)) break;
             #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-            __pyx_t_6 = PyTuple_GET_ITEM(__pyx_t_7, __pyx_t_2); __Pyx_INCREF(__pyx_t_6); __pyx_t_2++; if (unlikely(0 < 0)) __PYX_ERR(0, 173, __pyx_L17_error)
+            __pyx_t_8 = PyTuple_GET_ITEM(__pyx_t_6, __pyx_t_2); __Pyx_INCREF(__pyx_t_8); __pyx_t_2++; if (unlikely(0 < 0)) __PYX_ERR(0, 184, __pyx_L17_error)
             #else
-            __pyx_t_6 = PySequence_ITEM(__pyx_t_7, __pyx_t_2); __pyx_t_2++; if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 173, __pyx_L17_error)
-            __Pyx_GOTREF(__pyx_t_6);
+            __pyx_t_8 = PySequence_ITEM(__pyx_t_6, __pyx_t_2); __pyx_t_2++; if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 184, __pyx_L17_error)
+            __Pyx_GOTREF(__pyx_t_8);
             #endif
           }
         } else {
-          __pyx_t_6 = __pyx_t_18(__pyx_t_7);
-          if (unlikely(!__pyx_t_6)) {
+          __pyx_t_8 = __pyx_t_18(__pyx_t_6);
+          if (unlikely(!__pyx_t_8)) {
             PyObject* exc_type = PyErr_Occurred();
             if (exc_type) {
               if (likely(__Pyx_PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
-              else __PYX_ERR(0, 173, __pyx_L17_error)
+              else __PYX_ERR(0, 184, __pyx_L17_error)
             }
             break;
           }
-          __Pyx_GOTREF(__pyx_t_6);
+          __Pyx_GOTREF(__pyx_t_8);
         }
-        __Pyx_XDECREF_SET(__pyx_8genexpr1__pyx_v_data, __pyx_t_6);
-        __pyx_t_6 = 0;
+        __Pyx_XDECREF_SET(__pyx_8genexpr1__pyx_v_data, __pyx_t_8);
+        __pyx_t_8 = 0;
 
-        /* "periodfind/ls.pyx":172
+        /* "periodfind/ls.pyx":183
  *             return all_stats
  *         elif output == 'periodogram':
  *             return [Periodogram(data, [periods, period_dts], True)             # <<<<<<<<<<<<<<
  *                     for data in ls_ndarr]
  *         else:
  */
-        __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_Periodogram); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 172, __pyx_L17_error)
+        __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_Periodogram); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 183, __pyx_L17_error)
         __Pyx_GOTREF(__pyx_t_5);
-        __pyx_t_4 = PyList_New(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 172, __pyx_L17_error)
+        __pyx_t_4 = PyList_New(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 183, __pyx_L17_error)
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_INCREF(((PyObject *)__pyx_v_periods));
         __Pyx_GIVEREF(((PyObject *)__pyx_v_periods));
@@ -3555,23 +3591,23 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
         #if CYTHON_FAST_PYCALL
         if (PyFunction_Check(__pyx_t_5)) {
           PyObject *__pyx_temp[4] = {__pyx_t_19, __pyx_8genexpr1__pyx_v_data, __pyx_t_4, Py_True};
-          __pyx_t_6 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_9, 3+__pyx_t_9); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 172, __pyx_L17_error)
+          __pyx_t_8 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_9, 3+__pyx_t_9); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 183, __pyx_L17_error)
           __Pyx_XDECREF(__pyx_t_19); __pyx_t_19 = 0;
-          __Pyx_GOTREF(__pyx_t_6);
+          __Pyx_GOTREF(__pyx_t_8);
           __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
         } else
         #endif
         #if CYTHON_FAST_PYCCALL
         if (__Pyx_PyFastCFunction_Check(__pyx_t_5)) {
           PyObject *__pyx_temp[4] = {__pyx_t_19, __pyx_8genexpr1__pyx_v_data, __pyx_t_4, Py_True};
-          __pyx_t_6 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_9, 3+__pyx_t_9); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 172, __pyx_L17_error)
+          __pyx_t_8 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_9, 3+__pyx_t_9); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 183, __pyx_L17_error)
           __Pyx_XDECREF(__pyx_t_19); __pyx_t_19 = 0;
-          __Pyx_GOTREF(__pyx_t_6);
+          __Pyx_GOTREF(__pyx_t_8);
           __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
         } else
         #endif
         {
-          __pyx_t_20 = PyTuple_New(3+__pyx_t_9); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 172, __pyx_L17_error)
+          __pyx_t_20 = PyTuple_New(3+__pyx_t_9); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 183, __pyx_L17_error)
           __Pyx_GOTREF(__pyx_t_20);
           if (__pyx_t_19) {
             __Pyx_GIVEREF(__pyx_t_19); PyTuple_SET_ITEM(__pyx_t_20, 0, __pyx_t_19); __pyx_t_19 = NULL;
@@ -3585,15 +3621,15 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
           __Pyx_GIVEREF(Py_True);
           PyTuple_SET_ITEM(__pyx_t_20, 2+__pyx_t_9, Py_True);
           __pyx_t_4 = 0;
-          __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_20, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 172, __pyx_L17_error)
-          __Pyx_GOTREF(__pyx_t_6);
+          __pyx_t_8 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_20, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 183, __pyx_L17_error)
+          __Pyx_GOTREF(__pyx_t_8);
           __Pyx_DECREF(__pyx_t_20); __pyx_t_20 = 0;
         }
         __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-        if (unlikely(__Pyx_ListComp_Append(__pyx_t_8, (PyObject*)__pyx_t_6))) __PYX_ERR(0, 172, __pyx_L17_error)
-        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+        if (unlikely(__Pyx_ListComp_Append(__pyx_t_7, (PyObject*)__pyx_t_8))) __PYX_ERR(0, 183, __pyx_L17_error)
+        __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
 
-        /* "periodfind/ls.pyx":173
+        /* "periodfind/ls.pyx":184
  *         elif output == 'periodogram':
  *             return [Periodogram(data, [periods, period_dts], True)
  *                     for data in ls_ndarr]             # <<<<<<<<<<<<<<
@@ -3601,7 +3637,7 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
  *             raise NotImplementedError('Only "stats" output is implemented')
  */
       }
-      __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_XDECREF(__pyx_8genexpr1__pyx_v_data); __pyx_8genexpr1__pyx_v_data = 0;
       goto __pyx_L20_exit_scope;
       __pyx_L17_error:;
@@ -3609,11 +3645,11 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
       goto __pyx_L1_error;
       __pyx_L20_exit_scope:;
     } /* exit inner scope */
-    __pyx_r = __pyx_t_8;
-    __pyx_t_8 = 0;
+    __pyx_r = __pyx_t_7;
+    __pyx_t_7 = 0;
     goto __pyx_L0;
 
-    /* "periodfind/ls.pyx":171
+    /* "periodfind/ls.pyx":182
  * 
  *             return all_stats
  *         elif output == 'periodogram':             # <<<<<<<<<<<<<<
@@ -3622,20 +3658,20 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
  */
   }
 
-  /* "periodfind/ls.pyx":175
+  /* "periodfind/ls.pyx":186
  *                     for data in ls_ndarr]
  *         else:
  *             raise NotImplementedError('Only "stats" output is implemented')             # <<<<<<<<<<<<<<
  */
   /*else*/ {
-    __pyx_t_8 = __Pyx_PyObject_Call(__pyx_builtin_NotImplementedError, __pyx_tuple_, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 175, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_8);
-    __Pyx_Raise(__pyx_t_8, 0, 0, 0);
-    __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-    __PYX_ERR(0, 175, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_Call(__pyx_builtin_NotImplementedError, __pyx_tuple_, NULL); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 186, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_7);
+    __Pyx_Raise(__pyx_t_7, 0, 0, 0);
+    __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+    __PYX_ERR(0, 186, __pyx_L1_error)
   }
 
-  /* "periodfind/ls.pyx":45
+  /* "periodfind/ls.pyx":55
  *         self.ls = new CppLombScargle()
  * 
  *     def calc(self,             # <<<<<<<<<<<<<<
@@ -5793,7 +5829,7 @@ static PyModuleDef_Slot __pyx_moduledef_slots[] = {
 static struct PyModuleDef __pyx_moduledef = {
     PyModuleDef_HEAD_INIT,
     "ls",
-    0, /* m_doc */
+    __pyx_k_Provides_an_interface_for_analy, /* m_doc */
   #if CYTHON_PEP489_MULTI_PHASE_INIT
     0, /* m_size */
   #else
@@ -5881,9 +5917,9 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {0, 0, 0, 0, 0, 0, 0}
 };
 static CYTHON_SMALL_CODE int __Pyx_InitCachedBuiltins(void) {
-  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(0, 160, __pyx_L1_error)
-  __pyx_builtin_NotImplementedError = __Pyx_GetBuiltinName(__pyx_n_s_NotImplementedError); if (!__pyx_builtin_NotImplementedError) __PYX_ERR(0, 175, __pyx_L1_error)
-  __pyx_builtin_zip = __Pyx_GetBuiltinName(__pyx_n_s_zip); if (!__pyx_builtin_zip) __PYX_ERR(0, 139, __pyx_L1_error)
+  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(0, 170, __pyx_L1_error)
+  __pyx_builtin_NotImplementedError = __Pyx_GetBuiltinName(__pyx_n_s_NotImplementedError); if (!__pyx_builtin_NotImplementedError) __PYX_ERR(0, 186, __pyx_L1_error)
+  __pyx_builtin_zip = __Pyx_GetBuiltinName(__pyx_n_s_zip); if (!__pyx_builtin_zip) __PYX_ERR(0, 149, __pyx_L1_error)
   __pyx_builtin_TypeError = __Pyx_GetBuiltinName(__pyx_n_s_TypeError); if (!__pyx_builtin_TypeError) __PYX_ERR(1, 2, __pyx_L1_error)
   __pyx_builtin_RuntimeError = __Pyx_GetBuiltinName(__pyx_n_s_RuntimeError); if (!__pyx_builtin_RuntimeError) __PYX_ERR(2, 777, __pyx_L1_error)
   __pyx_builtin_ValueError = __Pyx_GetBuiltinName(__pyx_n_s_ValueError); if (!__pyx_builtin_ValueError) __PYX_ERR(2, 781, __pyx_L1_error)
@@ -5897,12 +5933,12 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__Pyx_InitCachedConstants", 0);
 
-  /* "periodfind/ls.pyx":175
+  /* "periodfind/ls.pyx":186
  *                     for data in ls_ndarr]
  *         else:
  *             raise NotImplementedError('Only "stats" output is implemented')             # <<<<<<<<<<<<<<
  */
-  __pyx_tuple_ = PyTuple_Pack(1, __pyx_kp_u_Only_stats_output_is_implemented); if (unlikely(!__pyx_tuple_)) __PYX_ERR(0, 175, __pyx_L1_error)
+  __pyx_tuple_ = PyTuple_Pack(1, __pyx_kp_u_Only_stats_output_is_implemented); if (unlikely(!__pyx_tuple_)) __PYX_ERR(0, 186, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple_);
   __Pyx_GIVEREF(__pyx_tuple_);
 
@@ -6036,17 +6072,17 @@ static int __Pyx_modinit_type_init_code(void) {
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__Pyx_modinit_type_init_code", 0);
   /*--- Type init code ---*/
-  if (PyType_Ready(&__pyx_type_10periodfind_2ls_LombScargle) < 0) __PYX_ERR(0, 33, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_10periodfind_2ls_LombScargle) < 0) __PYX_ERR(0, 43, __pyx_L1_error)
   #if PY_VERSION_HEX < 0x030800B1
   __pyx_type_10periodfind_2ls_LombScargle.tp_print = 0;
   #endif
   if ((CYTHON_USE_TYPE_SLOTS && CYTHON_USE_PYTYPE_LOOKUP) && likely(!__pyx_type_10periodfind_2ls_LombScargle.tp_dictoffset && __pyx_type_10periodfind_2ls_LombScargle.tp_getattro == PyObject_GenericGetAttr)) {
     __pyx_type_10periodfind_2ls_LombScargle.tp_getattro = __Pyx_PyObject_GenericGetAttr;
   }
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_s_LombScargle, (PyObject *)&__pyx_type_10periodfind_2ls_LombScargle) < 0) __PYX_ERR(0, 33, __pyx_L1_error)
-  if (__Pyx_setup_reduce((PyObject*)&__pyx_type_10periodfind_2ls_LombScargle) < 0) __PYX_ERR(0, 33, __pyx_L1_error)
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_s_LombScargle, (PyObject *)&__pyx_type_10periodfind_2ls_LombScargle) < 0) __PYX_ERR(0, 43, __pyx_L1_error)
+  if (__Pyx_setup_reduce((PyObject*)&__pyx_type_10periodfind_2ls_LombScargle) < 0) __PYX_ERR(0, 43, __pyx_L1_error)
   __pyx_ptype_10periodfind_2ls_LombScargle = &__pyx_type_10periodfind_2ls_LombScargle;
-  if (PyType_Ready(&__pyx_type_10periodfind_2ls___pyx_scope_struct__calc) < 0) __PYX_ERR(0, 45, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_10periodfind_2ls___pyx_scope_struct__calc) < 0) __PYX_ERR(0, 55, __pyx_L1_error)
   #if PY_VERSION_HEX < 0x030800B1
   __pyx_type_10periodfind_2ls___pyx_scope_struct__calc.tp_print = 0;
   #endif
@@ -6054,7 +6090,7 @@ static int __Pyx_modinit_type_init_code(void) {
     __pyx_type_10periodfind_2ls___pyx_scope_struct__calc.tp_getattro = __Pyx_PyObject_GenericGetAttrNoDict;
   }
   __pyx_ptype_10periodfind_2ls___pyx_scope_struct__calc = &__pyx_type_10periodfind_2ls___pyx_scope_struct__calc;
-  if (PyType_Ready(&__pyx_type_10periodfind_2ls___pyx_scope_struct_1_genexpr) < 0) __PYX_ERR(0, 139, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_10periodfind_2ls___pyx_scope_struct_1_genexpr) < 0) __PYX_ERR(0, 149, __pyx_L1_error)
   #if PY_VERSION_HEX < 0x030800B1
   __pyx_type_10periodfind_2ls___pyx_scope_struct_1_genexpr.tp_print = 0;
   #endif
@@ -6283,7 +6319,7 @@ if (!__Pyx_RefNanny) {
   Py_INCREF(__pyx_m);
   #else
   #if PY_MAJOR_VERSION < 3
-  __pyx_m = Py_InitModule4("ls", __pyx_methods, 0, 0, PYTHON_API_VERSION); Py_XINCREF(__pyx_m);
+  __pyx_m = Py_InitModule4("ls", __pyx_methods, __pyx_k_Provides_an_interface_for_analy, 0, PYTHON_API_VERSION); Py_XINCREF(__pyx_m);
   #else
   __pyx_m = PyModule_Create(&__pyx_moduledef);
   #endif
@@ -6329,26 +6365,26 @@ if (!__Pyx_RefNanny) {
   if (__Pyx_patch_abc() < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   #endif
 
-  /* "periodfind/ls.pyx":3
- * #cython: language_level=3
+  /* "periodfind/ls.pyx":13
+ * """
  * 
  * import numpy as np             # <<<<<<<<<<<<<<
  * from periodfind import Statistics, Periodogram
  * 
  */
-  __pyx_t_1 = __Pyx_Import(__pyx_n_s_numpy, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 3, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_Import(__pyx_n_s_numpy, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 13, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_np, __pyx_t_1) < 0) __PYX_ERR(0, 3, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_np, __pyx_t_1) < 0) __PYX_ERR(0, 13, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "periodfind/ls.pyx":4
+  /* "periodfind/ls.pyx":14
  * 
  * import numpy as np
  * from periodfind import Statistics, Periodogram             # <<<<<<<<<<<<<<
  * 
  * cimport numpy as np
  */
-  __pyx_t_1 = PyList_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 4, __pyx_L1_error)
+  __pyx_t_1 = PyList_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 14, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_INCREF(__pyx_n_s_Statistics);
   __Pyx_GIVEREF(__pyx_n_s_Statistics);
@@ -6356,32 +6392,32 @@ if (!__Pyx_RefNanny) {
   __Pyx_INCREF(__pyx_n_s_Periodogram);
   __Pyx_GIVEREF(__pyx_n_s_Periodogram);
   PyList_SET_ITEM(__pyx_t_1, 1, __pyx_n_s_Periodogram);
-  __pyx_t_2 = __Pyx_Import(__pyx_n_s_periodfind, __pyx_t_1, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 4, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_Import(__pyx_n_s_periodfind, __pyx_t_1, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 14, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_Statistics); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 4, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_Statistics); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 14, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_Statistics, __pyx_t_1) < 0) __PYX_ERR(0, 4, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_Statistics, __pyx_t_1) < 0) __PYX_ERR(0, 14, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_Periodogram); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 4, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_Periodogram); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 14, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_Periodogram, __pyx_t_1) < 0) __PYX_ERR(0, 4, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_Periodogram, __pyx_t_1) < 0) __PYX_ERR(0, 14, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "periodfind/ls.pyx":11
+  /* "periodfind/ls.pyx":21
  * 
  * # Include numpy <-> c array interop
  * np.import_array()             # <<<<<<<<<<<<<<
  * 
  * cdef extern from "./cuda/ls.h":
  */
-  __pyx_t_3 = __pyx_f_5numpy_import_array(); if (unlikely(__pyx_t_3 == ((int)-1))) __PYX_ERR(0, 11, __pyx_L1_error)
+  __pyx_t_3 = __pyx_f_5numpy_import_array(); if (unlikely(__pyx_t_3 == ((int)-1))) __PYX_ERR(0, 21, __pyx_L1_error)
 
   /* "periodfind/ls.pyx":1
  * #cython: language_level=3             # <<<<<<<<<<<<<<
  * 
- * import numpy as np
+ * # Copyright 2020 California Institute of Technology. All rights reserved.
  */
   __pyx_t_2 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
@@ -7851,6 +7887,93 @@ return_ne:
     #endif
     return (equals == Py_NE);
 #endif
+}
+
+/* GetItemInt */
+    static PyObject *__Pyx_GetItemInt_Generic(PyObject *o, PyObject* j) {
+    PyObject *r;
+    if (!j) return NULL;
+    r = PyObject_GetItem(o, j);
+    Py_DECREF(j);
+    return r;
+}
+static CYTHON_INLINE PyObject *__Pyx_GetItemInt_List_Fast(PyObject *o, Py_ssize_t i,
+                                                              CYTHON_NCP_UNUSED int wraparound,
+                                                              CYTHON_NCP_UNUSED int boundscheck) {
+#if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+    Py_ssize_t wrapped_i = i;
+    if (wraparound & unlikely(i < 0)) {
+        wrapped_i += PyList_GET_SIZE(o);
+    }
+    if ((!boundscheck) || likely(__Pyx_is_valid_index(wrapped_i, PyList_GET_SIZE(o)))) {
+        PyObject *r = PyList_GET_ITEM(o, wrapped_i);
+        Py_INCREF(r);
+        return r;
+    }
+    return __Pyx_GetItemInt_Generic(o, PyInt_FromSsize_t(i));
+#else
+    return PySequence_GetItem(o, i);
+#endif
+}
+static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Tuple_Fast(PyObject *o, Py_ssize_t i,
+                                                              CYTHON_NCP_UNUSED int wraparound,
+                                                              CYTHON_NCP_UNUSED int boundscheck) {
+#if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+    Py_ssize_t wrapped_i = i;
+    if (wraparound & unlikely(i < 0)) {
+        wrapped_i += PyTuple_GET_SIZE(o);
+    }
+    if ((!boundscheck) || likely(__Pyx_is_valid_index(wrapped_i, PyTuple_GET_SIZE(o)))) {
+        PyObject *r = PyTuple_GET_ITEM(o, wrapped_i);
+        Py_INCREF(r);
+        return r;
+    }
+    return __Pyx_GetItemInt_Generic(o, PyInt_FromSsize_t(i));
+#else
+    return PySequence_GetItem(o, i);
+#endif
+}
+static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Fast(PyObject *o, Py_ssize_t i, int is_list,
+                                                     CYTHON_NCP_UNUSED int wraparound,
+                                                     CYTHON_NCP_UNUSED int boundscheck) {
+#if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS && CYTHON_USE_TYPE_SLOTS
+    if (is_list || PyList_CheckExact(o)) {
+        Py_ssize_t n = ((!wraparound) | likely(i >= 0)) ? i : i + PyList_GET_SIZE(o);
+        if ((!boundscheck) || (likely(__Pyx_is_valid_index(n, PyList_GET_SIZE(o))))) {
+            PyObject *r = PyList_GET_ITEM(o, n);
+            Py_INCREF(r);
+            return r;
+        }
+    }
+    else if (PyTuple_CheckExact(o)) {
+        Py_ssize_t n = ((!wraparound) | likely(i >= 0)) ? i : i + PyTuple_GET_SIZE(o);
+        if ((!boundscheck) || likely(__Pyx_is_valid_index(n, PyTuple_GET_SIZE(o)))) {
+            PyObject *r = PyTuple_GET_ITEM(o, n);
+            Py_INCREF(r);
+            return r;
+        }
+    } else {
+        PySequenceMethods *m = Py_TYPE(o)->tp_as_sequence;
+        if (likely(m && m->sq_item)) {
+            if (wraparound && unlikely(i < 0) && likely(m->sq_length)) {
+                Py_ssize_t l = m->sq_length(o);
+                if (likely(l >= 0)) {
+                    i += l;
+                } else {
+                    if (!PyErr_ExceptionMatches(PyExc_OverflowError))
+                        return NULL;
+                    PyErr_Clear();
+                }
+            }
+            return m->sq_item(o, i);
+        }
+    }
+#else
+    if (is_list || PySequence_Check(o)) {
+        return PySequence_GetItem(o, i);
+    }
+#endif
+    return __Pyx_GetItemInt_Generic(o, PyInt_FromSsize_t(i));
 }
 
 /* PyErrFetchRestore */

@@ -139,11 +139,16 @@ class Statistics:
 
         # Find best parameters
         if not use_max:
-            partition = np.argpartition(data, n)[:n]
+            partition = np.argpartition(data, n, axis=None)[:n]
         else:
-            partition = np.argpartition(data, len(data) - n)[:-n]
+            partition = np.argpartition(data, len(data) - n, axis=None)[-n:]
 
         idxs = np.unravel_index(partition, data.shape)
+        idxs_t = []
+        for i in range(n):
+            idx = tuple(dim[i] for dim in idxs)
+            idxs_t.append(idx)
+        
         values = data[idxs]
 
         # Calculate the data-wide statistics
@@ -157,7 +162,7 @@ class Statistics:
             mad = np.median(np.abs(data - median))
 
         best = []
-        for (idx, val) in zip(idxs, values):
+        for (idx, val) in zip(idxs_t, values):
             param = [params[i][idx[i]] for i in range(len(params))]
             best.append(
                 Statistics(
@@ -169,6 +174,9 @@ class Statistics:
                     mad,
                     significance_type,
                 ))
+
+        # Sort by value so most significant is first
+        best.sort(key=lambda s: s.value, reverse=use_max)
 
         if n == 1:
             return best[0]
