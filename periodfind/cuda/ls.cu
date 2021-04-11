@@ -12,6 +12,8 @@
 #include "cuda_runtime.h"
 #include "math.h"
 
+#include "errchk.cuh"
+
 const float TWO_PI = M_PI * 2.0;
 
 //
@@ -88,7 +90,7 @@ __global__ void LombScargleKernel(const float* times,
                           - 2 * cos_tau * sin_tau * cos_sin
                           + sin_tau * sin_tau * cos_cos;
 
-    periodogram[thread_y * num_periods + thread_x] =
+    periodogram[thread_x * num_period_dts + thread_y] =
         0.5 * ((numerator_l / denominator_l) + (numerator_r / denominator_r));
 }
 
@@ -104,7 +106,8 @@ float* LombScargle::DeviceCalcLS(const float* times,
                                  const size_t num_periods,
                                  const size_t num_p_dts) const {
     float* periodogram;
-    cudaMalloc(&periodogram, num_periods * num_p_dts * sizeof(float));
+    gpuErrchk(
+        cudaMalloc(&periodogram, num_periods * num_p_dts * sizeof(float)));
 
     const size_t x_threads = 256;
     const size_t y_threads = 1;
@@ -136,18 +139,18 @@ float* LombScargle::CalcLS(const float* times,
     float* dev_mags;
     float* dev_periods;
     float* dev_period_dts;
-    cudaMalloc(&dev_times, data_bytes);
-    cudaMalloc(&dev_mags, data_bytes);
-    cudaMalloc(&dev_periods, num_periods * sizeof(float));
-    cudaMalloc(&dev_period_dts, num_p_dts * sizeof(float));
+    gpuErrchk(cudaMalloc(&dev_times, data_bytes));
+    gpuErrchk(cudaMalloc(&dev_mags, data_bytes));
+    gpuErrchk(cudaMalloc(&dev_periods, num_periods * sizeof(float)));
+    gpuErrchk(cudaMalloc(&dev_period_dts, num_p_dts * sizeof(float)));
 
     // Copy data to device memory
-    cudaMemcpy(dev_times, times, data_bytes, cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_mags, mags, data_bytes, cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_periods, periods, num_periods * sizeof(float),
-               cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_period_dts, period_dts, num_p_dts * sizeof(float),
-               cudaMemcpyHostToDevice);
+    gpuErrchk(cudaMemcpy(dev_times, times, data_bytes, cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(dev_mags, mags, data_bytes, cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(dev_periods, periods, num_periods * sizeof(float),
+                         cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(dev_period_dts, period_dts, num_p_dts * sizeof(float),
+                         cudaMemcpyHostToDevice));
 
     float* dev_periodogram =
         DeviceCalcLS(dev_times, dev_mags, length, dev_periods, dev_period_dts,
@@ -158,12 +161,12 @@ float* LombScargle::CalcLS(const float* times,
     cudaMemcpy(periodogram, dev_periodogram, periodogram_size,
                cudaMemcpyDeviceToHost);
 
-    cudaFree(dev_periodogram);
+    gpuErrchk(cudaFree(dev_periodogram));
 
-    cudaFree(dev_times);
-    cudaFree(dev_mags);
-    cudaFree(dev_periods);
-    cudaFree(dev_period_dts);
+    gpuErrchk(cudaFree(dev_times));
+    gpuErrchk(cudaFree(dev_mags));
+    gpuErrchk(cudaFree(dev_periods));
+    gpuErrchk(cudaFree(dev_period_dts));
 
     return periodogram;
 }
@@ -189,16 +192,16 @@ float* LombScargle::CalcLSBatched(const std::vector<float*>& times,
     // Copy trial information over
     float* dev_periods;
     float* dev_period_dts;
-    cudaMalloc(&dev_periods, num_periods * sizeof(float));
-    cudaMalloc(&dev_period_dts, num_p_dts * sizeof(float));
-    cudaMemcpy(dev_periods, periods, num_periods * sizeof(float),
-               cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_period_dts, period_dts, num_p_dts * sizeof(float),
-               cudaMemcpyHostToDevice);
+    gpuErrchk(cudaMalloc(&dev_periods, num_periods * sizeof(float)));
+    gpuErrchk(cudaMalloc(&dev_period_dts, num_p_dts * sizeof(float)));
+    gpuErrchk(cudaMemcpy(dev_periods, periods, num_periods * sizeof(float),
+                         cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(dev_period_dts, period_dts, num_p_dts * sizeof(float),
+                         cudaMemcpyHostToDevice));
 
     // Intermediate conditional entropy memory
     float* dev_per;
-    cudaMalloc(&dev_per, per_out_size);
+    gpuErrchk(cudaMalloc(&dev_per, per_out_size));
 
     // Kernel launch information
     const size_t x_threads = 256;
@@ -215,8 +218,8 @@ float* LombScargle::CalcLSBatched(const std::vector<float*>& times,
 
     float* dev_times_buffer;
     float* dev_mags_buffer;
-    cudaMalloc(&dev_times_buffer, buffer_bytes);
-    cudaMalloc(&dev_mags_buffer, buffer_bytes);
+    gpuErrchk(cudaMalloc(&dev_times_buffer, buffer_bytes));
+    gpuErrchk(cudaMalloc(&dev_mags_buffer, buffer_bytes));
 
     for (size_t i = 0; i < lengths.size(); i++) {
         // Copy light curve into device buffer
@@ -227,7 +230,7 @@ float* LombScargle::CalcLSBatched(const std::vector<float*>& times,
                    cudaMemcpyHostToDevice);
 
         // Zero conditional entropy output
-        cudaMemset(dev_per, 0, per_out_size);
+        gpuErrchk(cudaMemset(dev_per, 0, per_out_size));
 
         LombScargleKernel<<<grid_dim, block_dim>>>(
             dev_times_buffer, dev_mags_buffer, lengths[i], dev_periods,
@@ -239,11 +242,11 @@ float* LombScargle::CalcLSBatched(const std::vector<float*>& times,
     }
 
     // Free all of the GPU memory
-    cudaFree(dev_periods);
-    cudaFree(dev_period_dts);
-    cudaFree(dev_per);
-    cudaFree(dev_times_buffer);
-    cudaFree(dev_mags_buffer);
+    gpuErrchk(cudaFree(dev_periods));
+    gpuErrchk(cudaFree(dev_period_dts));
+    gpuErrchk(cudaFree(dev_per));
+    gpuErrchk(cudaFree(dev_times_buffer));
+    gpuErrchk(cudaFree(dev_mags_buffer));
 
     return per_host;
 }
