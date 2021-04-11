@@ -10,6 +10,8 @@
 #include "cuda_runtime.h"
 #include "math.h"
 
+#include "errchk.cuh"
+
 //
 // Simple AOV Function Definitions
 //
@@ -89,9 +91,11 @@ __global__ void FoldBinKernel(const float* times,
 
     __syncthreads();
 
+    size_t block_id = blockIdx.x * gridDim.y + blockIdx.y;
+
     for (size_t idx = threadIdx.x; idx < aov.NumPhaseBins();
          idx += blockDim.x) {
-        data[blockIdx.x * aov.NumPhaseBins() + idx] = {
+        data[block_id * aov.NumPhaseBins() + idx] = {
             sh_count[idx], sh_sums[idx], sh_sq_sums[idx]};
     }
 }
@@ -159,7 +163,7 @@ AOVData* AOV::DeviceFoldAndBin(const float* times,
 
     // Allocate and zero global memory for output histograms
     AOVData* dev_hists;
-    cudaMalloc(&dev_hists, bytes);
+    gpuErrchk(cudaMalloc(&dev_hists, bytes));
 
     // Number of threads and corresponding shared memory usage
     const size_t num_threads = 256;
@@ -191,18 +195,18 @@ AOVData* AOV::FoldAndBin(const float* times,
     float* dev_mags;
     float* dev_periods;
     float* dev_period_dts;
-    cudaMalloc(&dev_times, data_bytes);
-    cudaMalloc(&dev_mags, data_bytes);
-    cudaMalloc(&dev_periods, num_periods * sizeof(float));
-    cudaMalloc(&dev_period_dts, num_p_dts * sizeof(float));
+    gpuErrchk(cudaMalloc(&dev_times, data_bytes));
+    gpuErrchk(cudaMalloc(&dev_mags, data_bytes));
+    gpuErrchk(cudaMalloc(&dev_periods, num_periods * sizeof(float)));
+    gpuErrchk(cudaMalloc(&dev_period_dts, num_p_dts * sizeof(float)));
 
     // Copy data to device memory
-    cudaMemcpy(dev_times, times, data_bytes, cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_mags, mags, data_bytes, cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_periods, periods, num_periods * sizeof(float),
-               cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_period_dts, period_dts, num_p_dts * sizeof(float),
-               cudaMemcpyHostToDevice);
+    gpuErrchk(cudaMemcpy(dev_times, times, data_bytes, cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(dev_mags, mags, data_bytes, cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(dev_periods, periods, num_periods * sizeof(float),
+                         cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(dev_period_dts, period_dts, num_p_dts * sizeof(float),
+                         cudaMemcpyHostToDevice));
 
     AOVData* dev_hists =
         DeviceFoldAndBin(dev_times, dev_mags, length, dev_periods,
@@ -211,14 +215,14 @@ AOVData* AOV::FoldAndBin(const float* times,
     // Allocate host histograms and copy from device
     size_t bytes = NumPhaseBins() * num_periods * num_p_dts * sizeof(AOVData);
     AOVData* hists = (AOVData*)malloc(bytes);
-    cudaMemcpy(hists, dev_hists, bytes, cudaMemcpyDeviceToHost);
+    gpuErrchk(cudaMemcpy(hists, dev_hists, bytes, cudaMemcpyDeviceToHost));
 
     // Free GPU memory
-    cudaFree(dev_times);
-    cudaFree(dev_mags);
-    cudaFree(dev_periods);
-    cudaFree(dev_period_dts);
-    cudaFree(dev_hists);
+    gpuErrchk(cudaFree(dev_times));
+    gpuErrchk(cudaFree(dev_mags));
+    gpuErrchk(cudaFree(dev_periods));
+    gpuErrchk(cudaFree(dev_period_dts));
+    gpuErrchk(cudaFree(dev_hists));
 
     return hists;
 }
@@ -229,7 +233,7 @@ float* AOV::DeviceCalcAOVFromHists(const AOVData* hists,
                                    const float avg) const {
     // Allocate global memory for output conditional entropy values
     float* dev_aovs;
-    cudaMalloc(&dev_aovs, num_hists * sizeof(float));
+    gpuErrchk(cudaMalloc(&dev_aovs, num_hists * sizeof(float)));
 
     const size_t n_t = 512;
     const size_t n_b = (num_hists / n_t) + 1;
@@ -250,18 +254,19 @@ float* AOV::CalcAOVFromHists(const AOVData* hists,
 
     // Allocate device memory for histograms and copy over
     AOVData* dev_hists;
-    cudaMalloc(&dev_hists, bytes);
-    cudaMemcpy(dev_hists, hists, bytes, cudaMemcpyHostToDevice);
+    gpuErrchk(cudaMalloc(&dev_hists, bytes));
+    gpuErrchk(cudaMemcpy(dev_hists, hists, bytes, cudaMemcpyHostToDevice));
 
     float* dev_ces = DeviceCalcAOVFromHists(dev_hists, num_hists, length, avg);
 
     // Copy CEs to host
     float* ces = (float*)malloc(num_hists * sizeof(float));
-    cudaMemcpy(ces, dev_ces, num_hists * sizeof(float), cudaMemcpyDeviceToHost);
+    gpuErrchk(cudaMemcpy(ces, dev_ces, num_hists * sizeof(float),
+                         cudaMemcpyDeviceToHost));
 
     // Free GPU memory
-    cudaFree(dev_hists);
-    cudaFree(dev_ces);
+    gpuErrchk(cudaFree(dev_hists));
+    gpuErrchk(cudaFree(dev_ces));
 
     return ces;
 }
@@ -284,18 +289,18 @@ float* AOV::CalcAOVVals(const float* times,
     float* dev_mags;
     float* dev_periods;
     float* dev_period_dts;
-    cudaMalloc(&dev_times, data_bytes);
-    cudaMalloc(&dev_mags, data_bytes);
-    cudaMalloc(&dev_periods, num_periods * sizeof(float));
-    cudaMalloc(&dev_period_dts, num_p_dts * sizeof(float));
+    gpuErrchk(cudaMalloc(&dev_times, data_bytes));
+    gpuErrchk(cudaMalloc(&dev_mags, data_bytes));
+    gpuErrchk(cudaMalloc(&dev_periods, num_periods * sizeof(float)));
+    gpuErrchk(cudaMalloc(&dev_period_dts, num_p_dts * sizeof(float)));
 
     // Copy data to device memory
-    cudaMemcpy(dev_times, times, data_bytes, cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_mags, mags, data_bytes, cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_periods, periods, num_periods * sizeof(float),
-               cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_period_dts, period_dts, num_p_dts * sizeof(float),
-               cudaMemcpyHostToDevice);
+    gpuErrchk(cudaMemcpy(dev_times, times, data_bytes, cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(dev_mags, mags, data_bytes, cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(dev_periods, periods, num_periods * sizeof(float),
+                         cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(dev_period_dts, period_dts, num_p_dts * sizeof(float),
+                         cudaMemcpyHostToDevice));
 
     AOVData* dev_hists =
         DeviceFoldAndBin(dev_times, dev_mags, length, dev_periods,
@@ -306,18 +311,18 @@ float* AOV::CalcAOVVals(const float* times,
 
     // Copy AOVs to host
     float* aovs = (float*)malloc(num_hists * sizeof(float));
-    cudaMemcpy(aovs, dev_aovs, num_hists * sizeof(float),
-               cudaMemcpyDeviceToHost);
+    gpuErrchk(cudaMemcpy(aovs, dev_aovs, num_hists * sizeof(float),
+                         cudaMemcpyDeviceToHost));
 
     // Free intermediate and output values
-    cudaFree(dev_hists);
-    cudaFree(dev_aovs);
+    gpuErrchk(cudaFree(dev_hists));
+    gpuErrchk(cudaFree(dev_aovs));
 
     // Free GPU inputs
-    cudaFree(dev_times);
-    cudaFree(dev_mags);
-    cudaFree(dev_periods);
-    cudaFree(dev_period_dts);
+    gpuErrchk(cudaFree(dev_times));
+    gpuErrchk(cudaFree(dev_mags));
+    gpuErrchk(cudaFree(dev_periods));
+    gpuErrchk(cudaFree(dev_period_dts));
 
     return aovs;
 }
@@ -342,22 +347,22 @@ float* AOV::CalcAOVValsBatched(const std::vector<float*>& times,
     // Copy trial information over
     float* dev_periods;
     float* dev_period_dts;
-    cudaMalloc(&dev_periods, num_periods * sizeof(float));
-    cudaMalloc(&dev_period_dts, num_p_dts * sizeof(float));
-    cudaMemcpy(dev_periods, periods, num_periods * sizeof(float),
-               cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_periods, period_dts, num_p_dts * sizeof(float),
-               cudaMemcpyHostToDevice);
+    gpuErrchk(cudaMalloc(&dev_periods, num_periods * sizeof(float)));
+    gpuErrchk(cudaMalloc(&dev_period_dts, num_p_dts * sizeof(float)));
+    gpuErrchk(cudaMemcpy(dev_periods, periods, num_periods * sizeof(float),
+                         cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(dev_period_dts, period_dts, num_p_dts * sizeof(float),
+                         cudaMemcpyHostToDevice));
 
     // Intermediate histogram memory
     size_t num_hists = num_periods * num_p_dts;
     size_t hist_bytes = NumPhaseBins() * sizeof(AOVData) * num_hists;
     AOVData* dev_hists;
-    cudaMalloc(&dev_hists, hist_bytes);
+    gpuErrchk(cudaMalloc(&dev_hists, hist_bytes));
 
     // Intermediate conditional entropy memory
     float* dev_aovs;
-    cudaMalloc(&dev_aovs, aov_out_size);
+    gpuErrchk(cudaMalloc(&dev_aovs, aov_out_size));
 
     // Kernel launch information for the fold & bin step
     const size_t num_threads_fb = 256;
@@ -366,8 +371,7 @@ float* AOV::CalcAOVValsBatched(const std::vector<float*>& times,
 
     // Kernel launch information for the ce calculation step
     const size_t num_threads_aov = 256;
-    const size_t num_blocks_aov =
-        ((num_hists * NumPhaseBins()) / num_threads_aov) + 1;
+    const size_t num_blocks_aov = (num_hists / num_threads_aov) + 1;
     const size_t shared_bytes_aov = num_threads_aov * sizeof(float);
 
     // Buffer size (large enough for longest light curve)
@@ -377,8 +381,8 @@ float* AOV::CalcAOVValsBatched(const std::vector<float*>& times,
 
     float* dev_times_buffer;
     float* dev_mags_buffer;
-    cudaMalloc(&dev_times_buffer, buffer_bytes);
-    cudaMalloc(&dev_mags_buffer, buffer_bytes);
+    gpuErrchk(cudaMalloc(&dev_times_buffer, buffer_bytes));
+    gpuErrchk(cudaMalloc(&dev_mags_buffer, buffer_bytes));
 
     for (size_t i = 0; i < lengths.size(); i++) {
         float mean_mag = ArrayMean(mags[i], lengths[i]);
@@ -391,7 +395,7 @@ float* AOV::CalcAOVValsBatched(const std::vector<float*>& times,
                    cudaMemcpyHostToDevice);
 
         // Zero AOV output
-        cudaMemset(dev_aovs, 0, aov_out_size);
+        gpuErrchk(cudaMemset(dev_aovs, 0, aov_out_size));
 
         // NOTE: An AOV object is small enough that we can pass it
         //       in the registers by dereferencing it.
@@ -403,18 +407,18 @@ float* AOV::CalcAOVValsBatched(const std::vector<float*>& times,
         AOVKernel<<<num_blocks_aov, num_threads_aov, shared_bytes_aov>>>(
             dev_hists, num_hists, lengths[i], mean_mag, *this, dev_aovs);
 
-        // Copy CE data back to host
+        // Copy AOV data back to host
         cudaMemcpy(&aov_host[i * num_hists], dev_aovs, aov_out_size,
                    cudaMemcpyDeviceToHost);
     }
 
     // Free all of the GPU memory
-    cudaFree(dev_periods);
-    cudaFree(dev_period_dts);
-    cudaFree(dev_hists);
-    cudaFree(dev_aovs);
-    cudaFree(dev_times_buffer);
-    cudaFree(dev_mags_buffer);
+    gpuErrchk(cudaFree(dev_periods));
+    gpuErrchk(cudaFree(dev_period_dts));
+    gpuErrchk(cudaFree(dev_hists));
+    gpuErrchk(cudaFree(dev_aovs));
+    gpuErrchk(cudaFree(dev_times_buffer));
+    gpuErrchk(cudaFree(dev_mags_buffer));
 
     return aov_host;
 }
