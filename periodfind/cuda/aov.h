@@ -10,6 +10,16 @@
 #include <cstdint>
 #include <vector>
 
+// Required to avoid errors during Python API compilation.
+#ifndef __CUDACC__
+#ifndef __host__
+#define __host__
+#endif
+#ifndef __device__
+#define __device__
+#endif
+#endif
+
 struct AOVData {
     uint32_t count;
     float sum;
@@ -49,15 +59,15 @@ class AOV {
      *
      * @return number of phase bins in histogram
      */
-    size_t NumPhaseBins() const;
+    __host__ __device__ size_t NumPhaseBins() const;
 
     /**
      * Returns the amount of phase bin overlap in the histogram.
      *
      * @return amount of phase bin overlap in histogram
      */
-    size_t NumPhaseBinOverlap() const;
-
+    __host__ __device__ size_t NumPhaseBinOverlap() const;
+    
     /**
      * Gives the first phase bin for a given phase value.
      *
@@ -65,15 +75,7 @@ class AOV {
      *
      * @return phase bin index
      */
-
-    /**
-     * Gives the first phase bin for a given phase value.
-     *
-     * @param phase_val phase value
-     *
-     * @return phase bin index
-     */
-    size_t PhaseBin(float phase_val) const;
+    __host__ __device__ size_t PhaseBin(float phase_val) const;
 
     /**
      * Folds and bins a light curve across all trial periods and time

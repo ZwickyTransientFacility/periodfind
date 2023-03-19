@@ -10,6 +10,16 @@
 #include <cstdint>
 #include <vector>
 
+// Required to avoid errors during Python API compilation.
+#ifndef __CUDACC__
+#ifndef __host__
+#define __host__
+#endif
+#ifndef __device__
+#define __device__
+#endif
+#endif
+
 class ConditionalEntropy {
    private:
     size_t num_phase_bins;
@@ -55,49 +65,49 @@ class ConditionalEntropy {
      *
      * @return number of bins in histogram
      */
-    size_t NumBins() const;
+    __host__ __device__ size_t NumBins() const;
 
     /**
      * Returns the number of phase bins in the histogram.
      *
      * @return number of phase bins in histogram
      */
-    size_t NumPhaseBins() const;
+    __host__ __device__ size_t NumPhaseBins() const;
 
     /**
      * Returns the number of magnitude bins in the histogram.
      *
      * @return number of magnitude bins in histogram
      */
-    size_t NumMagBins() const;
+    __host__ __device__ size_t NumMagBins() const;
 
     /**
      * Returns the amount of phase bin overlap in the histogram.
      *
      * @return amount of phase bin overlap in histogram
      */
-    size_t NumPhaseBinOverlap() const;
+    __host__ __device__ size_t NumPhaseBinOverlap() const;
 
     /**
      * Returns the amount of magnitude bin overlap in the histogram.
      *
      * @return amount of magnitude bin overlap in histogram
      */
-    size_t NumMagBinOverlap() const;
+    __host__ __device__ size_t NumMagBinOverlap() const;
 
     /**
      * Returns the size of the phase bins in the histogram.
      *
      * @return size of the phase bins
      */
-    float PhaseBinSize() const;
+    __host__ __device__ float PhaseBinSize() const;
 
     /**
      * Returns the size of the magnitude bins in the histogram.
      *
      * @return size of the magnitude bins
      */
-    float MagBinSize() const;
+    __host__ __device__ float MagBinSize() const;
 
     /**
      * Gives the first phase bin for a given phase value.
@@ -106,7 +116,7 @@ class ConditionalEntropy {
      *
      * @return phase bin index
      */
-    size_t PhaseBin(float phase_val) const;
+    __host__ __device__ size_t PhaseBin(float phase_val) const;
 
     /**
      * Gives the first magnitude bin for a given magnitude value.
@@ -115,7 +125,7 @@ class ConditionalEntropy {
      *
      * @return magnitude bin index
      */
-    size_t MagBin(float mag_val) const;
+    __host__ __device__ size_t MagBin(float mag_val) const;
 
     /**
      * Gives the index of a given bin in a row-major histogram.
@@ -125,7 +135,7 @@ class ConditionalEntropy {
      *
      * @return row-major histogram index
      */
-    size_t BinIndex(size_t phase_bin, size_t mag_bin) const;
+    __host__ __device__ size_t BinIndex(size_t phase_bin, size_t mag_bin) const;
 
     /**
      * Folds and bins a light curve across all trial periods and time
