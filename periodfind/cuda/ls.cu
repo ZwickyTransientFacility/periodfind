@@ -124,13 +124,14 @@ float* LombScargle::DeviceCalcLS(const float* times,
     return periodogram;
 }
 
-float* LombScargle::CalcLS(const float* times,
-                           const float* mags,
-                           const size_t length,
-                           const float* periods,
-                           const float* period_dts,
-                           const size_t num_periods,
-                           const size_t num_p_dts) const {
+void LombScargle::CalcLS(const float* times,
+                         const float* mags,
+                         const size_t length,
+                         const float* periods,
+                         const float* period_dts,
+                         const size_t num_periods,
+                         const size_t num_p_dts,
+                         float* per_out) const {
     // Number of bytes of input data
     const size_t data_bytes = length * sizeof(float);
 
@@ -156,9 +157,9 @@ float* LombScargle::CalcLS(const float* times,
         DeviceCalcLS(dev_times, dev_mags, length, dev_periods, dev_period_dts,
                      num_periods, num_p_dts);
 
+    // Size of one periodogram out array
     const size_t periodogram_size = num_periods * num_p_dts * sizeof(float);
-    float* periodogram = (float*)malloc(periodogram_size);
-    cudaMemcpy(periodogram, dev_periodogram, periodogram_size,
+    cudaMemcpy(per_out, dev_periodogram, periodogram_size,
                cudaMemcpyDeviceToHost);
 
     gpuErrchk(cudaFree(dev_periodogram));
@@ -167,27 +168,43 @@ float* LombScargle::CalcLS(const float* times,
     gpuErrchk(cudaFree(dev_mags));
     gpuErrchk(cudaFree(dev_periods));
     gpuErrchk(cudaFree(dev_period_dts));
+}
+
+float* LombScargle::CalcLS(const float* times,
+                           const float* mags,
+                           const size_t length,
+                           const float* periods,
+                           const float* period_dts,
+                           const size_t num_periods,
+                           const size_t num_p_dts) const {
+    // Size of one periodogram out array
+    const size_t periodogram_size = num_periods * num_p_dts * sizeof(float);
+
+    // Allocate host memory for output periodogram.
+    float* periodogram = (float*)malloc(periodogram_size);
+
+    // Compute periodogram
+    CalcLS(times, mags, length, periods, period_dts, num_periods, num_p_dts,
+           periodogram);
 
     return periodogram;
 }
 
-float* LombScargle::CalcLSBatched(const std::vector<float*>& times,
-                                  const std::vector<float*>& mags,
-                                  const std::vector<size_t>& lengths,
-                                  const float* periods,
-                                  const float* period_dts,
-                                  const size_t num_periods,
-                                  const size_t num_p_dts) const {
+void LombScargle::CalcLSBatched(const std::vector<float*>& times,
+                                const std::vector<float*>& mags,
+                                const std::vector<size_t>& lengths,
+                                const float* periods,
+                                const float* period_dts,
+                                const size_t num_periods,
+                                const size_t num_p_dts,
+                                float* per_out) const {
     // TODO: Use async memory transferring
     // TODO: Look at ways of batching data transfer.
 
-    // Size of one CE out array, and total CE output size.
+    // Size of one periodogram out array, and total periodogram output size.
     size_t per_points = num_periods * num_p_dts;
     size_t per_out_size = per_points * sizeof(float);
     size_t per_size_total = per_out_size * lengths.size();
-
-    // Allocate the output CE array so we can copy to it.
-    float* per_host = (float*)malloc(per_size_total);
 
     // Copy trial information over
     float* dev_periods;
@@ -237,7 +254,7 @@ float* LombScargle::CalcLSBatched(const std::vector<float*>& times,
             dev_period_dts, num_periods, num_p_dts, *this, dev_per);
 
         // Copy periodogram back to host
-        cudaMemcpy(&per_host[i * per_points], dev_per, per_out_size,
+        cudaMemcpy(&per_out[i * per_points], dev_per, per_out_size,
                    cudaMemcpyDeviceToHost);
     }
 
@@ -247,6 +264,25 @@ float* LombScargle::CalcLSBatched(const std::vector<float*>& times,
     gpuErrchk(cudaFree(dev_per));
     gpuErrchk(cudaFree(dev_times_buffer));
     gpuErrchk(cudaFree(dev_mags_buffer));
+}
 
-    return per_host;
+float* LombScargle::CalcLSBatched(const std::vector<float*>& times,
+                                  const std::vector<float*>& mags,
+                                  const std::vector<size_t>& lengths,
+                                  const float* periods,
+                                  const float* period_dts,
+                                  const size_t num_periods,
+                                  const size_t num_p_dts) const {
+    // Size of one periodogram out array, and total periodogram output size.
+    size_t per_points = num_periods * num_p_dts;
+    size_t per_out_size = per_points * sizeof(float);
+    size_t per_size_total = per_out_size * lengths.size();
+
+    // Allocate the output CE array so we can copy to it.
+    float* per_out = (float*)malloc(per_size_total);
+
+    CalcLSBatched(times, mags, lengths, periods, period_dts, num_periods,
+                  num_p_dts, per_out);
+
+    return per_out;
 }

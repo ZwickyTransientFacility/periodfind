@@ -28,21 +28,14 @@ cdef extern from "./cuda/ce.h":
                         size_t num_phase_overlap,
                         size_t num_mag_overlap)
         
-        float* CalcCEVals(const float* times,
-                          const float* mags,
-                          const size_t length,
-                          const float* periods,
-                          const float* period_dts,
-                          const size_t num_periods,
-                          const size_t num_p_dts) const
-        
-        float* CalcCEValsBatched(const vector[float*]& times,
-                                 const vector[float*]& mags,
-                                 const vector[size_t]& lengths,
-                                 const float* periods,
-                                 const float* period_dts,
-                                 const size_t num_periods,
-                                 const size_t num_p_dts) const;
+        void CalcCEValsBatched(const vector[float*]& times,
+                               const vector[float*]& mags,
+                               const vector[size_t]& lengths,
+                               const float* periods,
+                               const float* period_dts,
+                               const size_t num_periods,
+                               const size_t num_p_dts,
+                               float* ce_out) const;
 
 cdef class ConditionalEntropy:
     """Conditional Entropy based light curve analysis.
@@ -185,18 +178,14 @@ cdef class ConditionalEntropy:
         n_per = len(periods)
         n_pdt = len(period_dts)
 
-        cdef float* ces = self.ce.CalcCEValsBatched(
+        ces_ndarr = np.zeros([len(times), n_per, n_pdt], dtype=np.float32)
+        cdef float[:, :, ::1] ces_view = ces_ndarr
+
+        self.ce.CalcCEValsBatched(
             times_ptrs, mags_ptrs, times_lens,
             &periods[0], &period_dts[0], n_per, n_pdt,
+            &ces_view[0, 0, 0]
         )
-
-        cdef np.npy_intp dim[3]
-        dim[0] = len(times)
-        dim[1] = n_per
-        dim[2] = n_pdt
-
-        cdef np.ndarray[ndim=3, dtype=np.float32_t] ces_ndarr = \
-            np.PyArray_SimpleNewFromData(3, dim, np.NPY_FLOAT, ces)
         
         if output == 'stats':
             all_stats = []

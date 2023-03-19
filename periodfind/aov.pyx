@@ -25,21 +25,14 @@ cdef extern from "./cuda/aov.h":
         CppAOV(size_t num_phase,
                size_t num_phase_overlap)
         
-        float* CalcAOVVals(const float* times,
-                           const float* mags,
-                           const size_t length,
-                           const float* periods,
-                           const float* period_dts,
-                           const size_t num_periods,
-                           const size_t num_p_dts) const
-        
-        float* CalcAOVValsBatched(const vector[float*]& times,
-                                  const vector[float*]& mags,
-                                  const vector[size_t]& lengths,
-                                  const float* periods,
-                                  const float* period_dts,
-                                  const size_t num_periods,
-                                  const size_t num_p_dts) const;
+        void CalcAOVValsBatched(const vector[float*]& times,
+                                const vector[float*]& mags,
+                                const vector[size_t]& lengths,
+                                const float* periods,
+                                const float* period_dts,
+                                const size_t num_periods,
+                                const size_t num_p_dts,
+                                float* aov_out) const;
 
 cdef class AOV:
     """Analysis-of-Variance based light curve analysis.
@@ -168,18 +161,14 @@ cdef class AOV:
         n_per = len(periods)
         n_pdt = len(period_dts)
 
-        cdef float* aovs = self.aov.CalcAOVValsBatched(
+        aovs_ndarr = np.zeros([len(times), n_per, n_pdt], dtype=np.float32)
+        cdef float[:, :, ::1] aovs_view = aovs_ndarr
+
+        self.aov.CalcAOVValsBatched(
             times_ptrs, mags_ptrs, times_lens,
             &periods[0], &period_dts[0], n_per, n_pdt,
+            &aovs_view[0, 0, 0]
         )
-
-        cdef np.npy_intp dim[3]
-        dim[0] = len(times)
-        dim[1] = n_per
-        dim[2] = n_pdt
-
-        cdef np.ndarray[ndim=3, dtype=np.float32_t] aovs_ndarr = \
-            np.PyArray_SimpleNewFromData(3, dim, np.NPY_FLOAT, aovs)
         
         if output == 'stats':
             all_stats = []

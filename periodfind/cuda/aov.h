@@ -180,6 +180,36 @@ class AOV {
      * Computes the AOV values for the input light curve (times
      * and mags). The magnitudes are assumed to have been scaled into a [0, 1)
      * range. The AOV score is calculated for each period and time
+     * derivative, then written to the output array indexed first by period
+     * index, then time derivative index (i.e. (period 0, td 0),
+     * (period 0, td 1), ... (period 1, td 0), (period 1, td 1) etc.).
+     *
+     * Arguments should all be host pointers.
+     *
+     * @param times light curve datapoint times
+     * @param mags light curve datapoint magnitudes
+     * @param length length of the input light curve
+     * @param periods list of trial periods
+     * @param period_dts list of trial period time derivatives
+     * @param num_periods number of trial periods
+     * @param num_p_dts number of trial time derivatives
+     * @param aov_out output AOV values
+     */
+    void CalcAOVVals(const float* times,
+                     const float* mags,
+                     const size_t length,
+                     const float* periods,
+                     const float* period_dts,
+                     const size_t num_periods,
+                     const size_t num_p_dts,
+                     float* aov_out) const;
+
+    /**
+     * Computes the AOV values for the input light curve.
+     *
+     * Computes the AOV values for the input light curve (times
+     * and mags). The magnitudes are assumed to have been scaled into a [0, 1)
+     * range. The AOV score is calculated for each period and time
      * derivative, then output in a host array indexed first by period index,
      * then time derivative index (i.e. (period 0, td 0), (period 0, td 1), ...
      * (period 1, td 0), (period 1, td 1) etc.) which is returned.
@@ -203,6 +233,38 @@ class AOV {
                        const float* period_dts,
                        const size_t num_periods,
                        const size_t num_p_dts) const;
+
+    /**
+     * Computes the AOV values for all input light curves.
+     *
+     * Computes the AOV values for each input light curve (times
+     * and mags). The magnitudes are assumed to have been scaled into a [0, 1)
+     * range. The light curves should have lengths as specified (in order) in
+     * the lengths vector. For each light curve, the AOV value is
+     * calculated for each period and time derivative, indexed first by period
+     * index then time derivative index (i.e. (period 0, td 0), (period 0, td
+     * 1), ... (period 1, td 0), (period 1, td 1) etc.). The AOV
+     * arrays are stored consecutively and written to the provided output array.
+     *
+     * Arguments should all be host pointers.
+     *
+     * @param times ordered vector of light curve times
+     * @param mags orderded vector of light curve magnitudes
+     * @param lengths ordered vector of light curve lengths
+     * @param periods list of trial periods
+     * @param period_dts list of trial period time derivatives
+     * @param num_periods number of trial periods
+     * @param num_p_dts number of trial time derivatives
+     * @param aov_out output AOV values
+     */
+    void CalcAOVValsBatched(const std::vector<float*>& times,
+                            const std::vector<float*>& mags,
+                            const std::vector<size_t>& lengths,
+                            const float* periods,
+                            const float* period_dts,
+                            const size_t num_periods,
+                            const size_t num_p_dts,
+                            float* aov_out) const;
 
     /**
      * Computes the AOV values for all input light curves.

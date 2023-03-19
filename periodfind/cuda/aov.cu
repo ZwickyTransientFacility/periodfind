@@ -271,13 +271,14 @@ float* AOV::CalcAOVFromHists(const AOVData* hists,
     return ces;
 }
 
-float* AOV::CalcAOVVals(const float* times,
-                        const float* mags,
-                        const size_t length,
-                        const float* periods,
-                        const float* period_dts,
-                        const size_t num_periods,
-                        const size_t num_p_dts) const {
+void AOV::CalcAOVVals(const float* times,
+                      const float* mags,
+                      const size_t length,
+                      const float* periods,
+                      const float* period_dts,
+                      const size_t num_periods,
+                      const size_t num_p_dts,
+                      float* aov_out) const {
     float mean_mag = ArrayMean(mags, length);
 
     // Number of bytes of input data
@@ -310,8 +311,7 @@ float* AOV::CalcAOVVals(const float* times,
         DeviceCalcAOVFromHists(dev_hists, num_hists, length, mean_mag);
 
     // Copy AOVs to host
-    float* aovs = (float*)malloc(num_hists * sizeof(float));
-    gpuErrchk(cudaMemcpy(aovs, dev_aovs, num_hists * sizeof(float),
+    gpuErrchk(cudaMemcpy(aov_out, dev_aovs, num_hists * sizeof(float),
                          cudaMemcpyDeviceToHost));
 
     // Free intermediate and output values
@@ -323,26 +323,42 @@ float* AOV::CalcAOVVals(const float* times,
     gpuErrchk(cudaFree(dev_mags));
     gpuErrchk(cudaFree(dev_periods));
     gpuErrchk(cudaFree(dev_period_dts));
+}
+
+float* AOV::CalcAOVVals(const float* times,
+                        const float* mags,
+                        const size_t length,
+                        const float* periods,
+                        const float* period_dts,
+                        const size_t num_periods,
+                        const size_t num_p_dts) const {
+    // Number of floats of output data
+    const size_t num_hists = num_periods * num_p_dts;
+
+    // Allocate host memory for output AOV values.
+    float* aovs = (float*)malloc(num_hists * sizeof(float));
+
+    // Perform AOV calculation
+    CalcAOVVals(times, mags, length, periods, period_dts, num_periods,
+                num_p_dts, aovs);
 
     return aovs;
 }
 
-float* AOV::CalcAOVValsBatched(const std::vector<float*>& times,
-                               const std::vector<float*>& mags,
-                               const std::vector<size_t>& lengths,
-                               const float* periods,
-                               const float* period_dts,
-                               const size_t num_periods,
-                               const size_t num_p_dts) const {
+void AOV::CalcAOVValsBatched(const std::vector<float*>& times,
+                             const std::vector<float*>& mags,
+                             const std::vector<size_t>& lengths,
+                             const float* periods,
+                             const float* period_dts,
+                             const size_t num_periods,
+                             const size_t num_p_dts,
+                             float* aov_out) const {
     // TODO: Use async memory transferring
     // TODO: Look at ways of batching data transfer.
 
     // Size of one AOV out array, and total AOV output size.
     size_t aov_out_size = num_periods * num_p_dts * sizeof(float);
     size_t aov_size_total = aov_out_size * lengths.size();
-
-    // Allocate the output AOV array so we can copy to it.
-    float* aov_host = (float*)malloc(aov_size_total);
 
     // Copy trial information over
     float* dev_periods;
@@ -408,7 +424,7 @@ float* AOV::CalcAOVValsBatched(const std::vector<float*>& times,
             dev_hists, num_hists, lengths[i], mean_mag, *this, dev_aovs);
 
         // Copy AOV data back to host
-        cudaMemcpy(&aov_host[i * num_hists], dev_aovs, aov_out_size,
+        cudaMemcpy(&aov_out[i * num_hists], dev_aovs, aov_out_size,
                    cudaMemcpyDeviceToHost);
     }
 
@@ -419,6 +435,25 @@ float* AOV::CalcAOVValsBatched(const std::vector<float*>& times,
     gpuErrchk(cudaFree(dev_aovs));
     gpuErrchk(cudaFree(dev_times_buffer));
     gpuErrchk(cudaFree(dev_mags_buffer));
+}
 
-    return aov_host;
+float* AOV::CalcAOVValsBatched(const std::vector<float*>& times,
+                               const std::vector<float*>& mags,
+                               const std::vector<size_t>& lengths,
+                               const float* periods,
+                               const float* period_dts,
+                               const size_t num_periods,
+                               const size_t num_p_dts) const {
+    // Size of one AOV out array, and total AOV output size.
+    size_t aov_out_size = num_periods * num_p_dts * sizeof(float);
+    size_t aov_size_total = aov_out_size * lengths.size();
+
+    // Allocate the output AOV array so we can copy to it.
+    float* aov_out = (float*)malloc(aov_size_total);
+
+    // Perform AOV calculation.
+    CalcAOVValsBatched(times, mags, lengths, periods, period_dts, num_periods,
+                       num_p_dts, aov_out);
+
+    return aov_out;
 }

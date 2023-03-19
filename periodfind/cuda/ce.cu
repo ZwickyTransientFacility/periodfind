@@ -354,13 +354,14 @@ float* ConditionalEntropy::CalcCEFromHists(const float* hists,
     return ces;
 }
 
-float* ConditionalEntropy::CalcCEVals(const float* times,
-                                      const float* mags,
-                                      const size_t length,
-                                      const float* periods,
-                                      const float* period_dts,
-                                      const size_t num_periods,
-                                      const size_t num_p_dts) const {
+void ConditionalEntropy::CalcCEVals(const float* times,
+                                    const float* mags,
+                                    const size_t length,
+                                    const float* periods,
+                                    const float* period_dts,
+                                    const size_t num_periods,
+                                    const size_t num_p_dts,
+                                    float* ce_out) const {
     // Number of bytes of input data
     const size_t data_bytes = length * sizeof(float);
     const size_t num_hists = num_periods * num_p_dts;
@@ -390,8 +391,7 @@ float* ConditionalEntropy::CalcCEVals(const float* times,
     float* dev_ces = DeviceCalcCEFromHists(dev_hists, num_hists);
 
     // Copy CEs to host
-    float* ces = (float*)malloc(num_hists * sizeof(float));
-    gpuErrchk(cudaMemcpy(ces, dev_ces, num_hists * sizeof(float),
+    gpuErrchk(cudaMemcpy(ce_out, dev_ces, num_hists * sizeof(float),
                          cudaMemcpyDeviceToHost));
 
     // Free intermediate and output values
@@ -403,26 +403,42 @@ float* ConditionalEntropy::CalcCEVals(const float* times,
     gpuErrchk(cudaFree(dev_mags));
     gpuErrchk(cudaFree(dev_periods));
     gpuErrchk(cudaFree(dev_period_dts));
+}
+
+float* ConditionalEntropy::CalcCEVals(const float* times,
+                                      const float* mags,
+                                      const size_t length,
+                                      const float* periods,
+                                      const float* period_dts,
+                                      const size_t num_periods,
+                                      const size_t num_p_dts) const {
+    // Number of floats of output data
+    const size_t num_hists = num_periods * num_p_dts;
+
+    // Allocate host memory for output CE values.
+    float* ces = (float*)malloc(num_hists * sizeof(float));
+
+    // Perform CE calculation
+    CalcCEVals(times, mags, length, periods, period_dts, num_periods, num_p_dts,
+               ces);
 
     return ces;
 }
 
-float* ConditionalEntropy::CalcCEValsBatched(const std::vector<float*>& times,
-                                             const std::vector<float*>& mags,
-                                             const std::vector<size_t>& lengths,
-                                             const float* periods,
-                                             const float* period_dts,
-                                             const size_t num_periods,
-                                             const size_t num_p_dts) const {
+void ConditionalEntropy::CalcCEValsBatched(const std::vector<float*>& times,
+                                           const std::vector<float*>& mags,
+                                           const std::vector<size_t>& lengths,
+                                           const float* periods,
+                                           const float* period_dts,
+                                           const size_t num_periods,
+                                           const size_t num_p_dts,
+                                           float* ce_out) const {
     // TODO: Use async memory transferring
     // TODO: Look at ways of batching data transfer.
 
     // Size of one CE out array, and total CE output size.
     size_t ce_out_size = num_periods * num_p_dts * sizeof(float);
     size_t ce_size_total = ce_out_size * lengths.size();
-
-    // Allocate the output CE array so we can copy to it.
-    float* ce_host = (float*)malloc(ce_size_total);
 
     // Copy trial information over
     float* dev_periods;
@@ -488,7 +504,7 @@ float* ConditionalEntropy::CalcCEValsBatched(const std::vector<float*>& times,
                                                       *this, dev_ces);
 
         // Copy CE data back to host
-        gpuErrchk(cudaMemcpy(&ce_host[i * num_hists], dev_ces, ce_out_size,
+        gpuErrchk(cudaMemcpy(&ce_out[i * num_hists], dev_ces, ce_out_size,
                              cudaMemcpyDeviceToHost));
     }
 
@@ -499,6 +515,25 @@ float* ConditionalEntropy::CalcCEValsBatched(const std::vector<float*>& times,
     gpuErrchk(cudaFree(dev_ces));
     gpuErrchk(cudaFree(dev_times_buffer));
     gpuErrchk(cudaFree(dev_mags_buffer));
+}
 
-    return ce_host;
+float* ConditionalEntropy::CalcCEValsBatched(const std::vector<float*>& times,
+                                             const std::vector<float*>& mags,
+                                             const std::vector<size_t>& lengths,
+                                             const float* periods,
+                                             const float* period_dts,
+                                             const size_t num_periods,
+                                             const size_t num_p_dts) const {
+    // Size of one CE out array, and total CE output size.
+    size_t ce_out_size = num_periods * num_p_dts * sizeof(float);
+    size_t ce_size_total = ce_out_size * lengths.size();
+
+    // Allocate host memory for output CE values.
+    float* ce_out = (float*)malloc(ce_size_total);
+
+    // Perform CE calculation.
+    CalcCEValsBatched(times, mags, lengths, periods, period_dts, num_periods,
+                      num_p_dts, ce_out);
+
+    return ce_out;
 }
