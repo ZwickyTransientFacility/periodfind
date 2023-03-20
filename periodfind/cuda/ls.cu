@@ -124,70 +124,29 @@ float* LombScargle::DeviceCalcLS(const float* times,
     return periodogram;
 }
 
-void LombScargle::CalcLS(const float* times,
-                         const float* mags,
-                         const size_t length,
+void LombScargle::CalcLS(float* times,
+                         float* mags,
+                         size_t length,
                          const float* periods,
                          const float* period_dts,
                          const size_t num_periods,
                          const size_t num_p_dts,
                          float* per_out) const {
-    // Number of bytes of input data
-    const size_t data_bytes = length * sizeof(float);
-
-    // Allocate device pointers
-    float* dev_times;
-    float* dev_mags;
-    float* dev_periods;
-    float* dev_period_dts;
-    gpuErrchk(cudaMalloc(&dev_times, data_bytes));
-    gpuErrchk(cudaMalloc(&dev_mags, data_bytes));
-    gpuErrchk(cudaMalloc(&dev_periods, num_periods * sizeof(float)));
-    gpuErrchk(cudaMalloc(&dev_period_dts, num_p_dts * sizeof(float)));
-
-    // Copy data to device memory
-    gpuErrchk(cudaMemcpy(dev_times, times, data_bytes, cudaMemcpyHostToDevice));
-    gpuErrchk(cudaMemcpy(dev_mags, mags, data_bytes, cudaMemcpyHostToDevice));
-    gpuErrchk(cudaMemcpy(dev_periods, periods, num_periods * sizeof(float),
-                         cudaMemcpyHostToDevice));
-    gpuErrchk(cudaMemcpy(dev_period_dts, period_dts, num_p_dts * sizeof(float),
-                         cudaMemcpyHostToDevice));
-
-    float* dev_periodogram =
-        DeviceCalcLS(dev_times, dev_mags, length, dev_periods, dev_period_dts,
-                     num_periods, num_p_dts);
-
-    // Size of one periodogram out array
-    const size_t periodogram_size = num_periods * num_p_dts * sizeof(float);
-    cudaMemcpy(per_out, dev_periodogram, periodogram_size,
-               cudaMemcpyDeviceToHost);
-
-    gpuErrchk(cudaFree(dev_periodogram));
-
-    gpuErrchk(cudaFree(dev_times));
-    gpuErrchk(cudaFree(dev_mags));
-    gpuErrchk(cudaFree(dev_periods));
-    gpuErrchk(cudaFree(dev_period_dts));
+    CalcLSBatched(std::vector<float*>{times}, std::vector<float*>{mags},
+                  std::vector<size_t>{length}, periods, period_dts, num_periods,
+                  num_p_dts, per_out);
 }
 
-float* LombScargle::CalcLS(const float* times,
-                           const float* mags,
-                           const size_t length,
+float* LombScargle::CalcLS(float* times,
+                           float* mags,
+                           size_t length,
                            const float* periods,
                            const float* period_dts,
                            const size_t num_periods,
                            const size_t num_p_dts) const {
-    // Size of one periodogram out array
-    const size_t periodogram_size = num_periods * num_p_dts * sizeof(float);
-
-    // Allocate host memory for output periodogram.
-    float* periodogram = (float*)malloc(periodogram_size);
-
-    // Compute periodogram
-    CalcLS(times, mags, length, periods, period_dts, num_periods, num_p_dts,
-           periodogram);
-
-    return periodogram;
+    return CalcLSBatched(std::vector<float*>{times}, std::vector<float*>{mags},
+                         std::vector<size_t>{length}, periods, period_dts,
+                         num_periods, num_p_dts);
 }
 
 void LombScargle::CalcLSBatched(const std::vector<float*>& times,

@@ -197,9 +197,9 @@ class AOV {
      * @param num_p_dts number of trial time derivatives
      * @param aov_out output AOV values
      */
-    void CalcAOVVals(const float* times,
-                     const float* mags,
-                     const size_t length,
+    void CalcAOVVals(float* times,
+                     float* mags,
+                     size_t length,
                      const float* periods,
                      const float* period_dts,
                      const size_t num_periods,
@@ -228,9 +228,9 @@ class AOV {
      *
      * @return host array of AOV values
      */
-    float* CalcAOVVals(const float* times,
-                       const float* mags,
-                       const size_t length,
+    float* CalcAOVVals(float* times,
+                       float* mags,
+                       size_t length,
                        const float* periods,
                        const float* period_dts,
                        const size_t num_periods,

@@ -254,9 +254,9 @@ class ConditionalEntropy {
      * @param num_p_dts number of trial time derivatives
      * @param ce_out output conditional entropy values
      */
-    void CalcCEVals(const float* times,
-                    const float* mags,
-                    const size_t length,
+    void CalcCEVals(float* times,
+                    float* mags,
+                    size_t length,
                     const float* periods,
                     const float* period_dts,
                     const size_t num_periods,
@@ -285,9 +285,9 @@ class ConditionalEntropy {
      *
      * @return host array of conditional entropy values
      */
-    float* CalcCEVals(const float* times,
-                      const float* mags,
-                      const size_t length,
+    float* CalcCEVals(float* times,
+                      float* mags,
+                      size_t length,
                       const float* periods,
                       const float* period_dts,
                       const size_t num_periods,

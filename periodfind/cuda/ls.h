@@ -67,9 +67,9 @@ class LombScargle {
      * @param num_p_dts number of trial time derivatives
      * @param per_out output periodogram
      */
-    void CalcLS(const float* times,
-                const float* mags,
-                const size_t length,
+    void CalcLS(float* times,
+                float* mags,
+                size_t length,
                 const float* periods,
                 const float* period_dts,
                 const size_t num_periods,
@@ -97,9 +97,9 @@ class LombScargle {
      *
      * @return host array of periodograms
      */
-    float* CalcLS(const float* times,
-                  const float* mags,
-                  const size_t length,
+    float* CalcLS(float* times,
+                  float* mags,
+                  size_t length,
                   const float* periods,
                   const float* period_dts,
                   const size_t num_periods,
