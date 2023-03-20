@@ -170,9 +170,9 @@ extensions = [
 ]
 
 setup(name="periodfind",
-      version='0.0.3',
+      version='0.0.4',
       description='GPU-accelerated period finding utilities',
-      url='https://github.com/ejaszewski/periodfind',
+      url='https://github.com/ZwickyTransientFacility/periodfind',
       author='Ethan Jaszewski',
       author_email='ethanjaszewski@yahoo.com',
       classifiers=[
