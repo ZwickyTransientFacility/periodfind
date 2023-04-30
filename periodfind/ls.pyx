@@ -10,8 +10,9 @@ Provides an interface for analyzing light curves using Lomb-Scargle
 periodograms.
 """
 
+import warnings
 import numpy as np
-from periodfind import Statistics, Periodogram
+from periodfind import Statistics, Periodogram, _py_warn_periodfind
 
 cimport numpy as np
 from libc.stddef cimport size_t
@@ -33,6 +34,9 @@ cdef extern from "./cuda/ls.h":
                            const size_t num_p_dts,
                            float* per_out) const;
 
+def __py_warn_ls(message, type):
+    warnings.warn(message, type, stacklevel=2)
+
 cdef class LombScargle:
     """Lomb-Scargle periodogram light curve analysis.
 
@@ -52,6 +56,7 @@ cdef class LombScargle:
              np.ndarray[ndim=1, dtype=np.float32_t] period_dts,
              output="stats",
              normalize=False,
+             center=True,
              n_stats=1,
              significance_type='stdmean'):
         """Runs Lomb-Scargle calculations on a list of light curves.
@@ -78,7 +83,12 @@ cdef class LombScargle:
             Type of output that should be returned
         
         normalize : bool, default=False
-            Whether to normalize the light curve magnitudes
+            Whether to normalize the light curve magnitudes. If true, light
+            curve magnitudes will be normalized to a (0, 1) range
+
+        center : bool, default=True
+            Whether to center the light curve magnitutes. If true, light curve
+            magnitudes will be shifted so that the data have zero mean.
 
         n_stats : int, default=1
             Number of output `Statistics` to return if `output='stats'`
@@ -120,8 +130,16 @@ cdef class LombScargle:
             times_ptrs.push_back(&time_arr[0])
             times_lens.push_back(len(time_arr))
 
+        if center and normalize:
+            _py_warn_periodfind(
+                'Center and normalize are conflicting settings. Normalize will be ignored.',
+                RuntimeWarning)
+
         mags_use = []
-        if normalize:
+        if center:
+            for mag in mags:
+                mags_use.append(mag - np.mean(mag))
+        elif normalize:
             for mag in mags:
                 min_v = np.min(mag)
                 max_v = np.max(mag)

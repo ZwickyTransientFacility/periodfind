@@ -11,7 +11,7 @@ algorithm.
 """
 
 import numpy as np
-from periodfind import Statistics, Periodogram
+from periodfind import Statistics, Periodogram, _py_warn_periodfind
 
 cimport numpy as np
 from libc.stddef cimport size_t
@@ -85,6 +85,7 @@ cdef class ConditionalEntropy:
              np.ndarray[ndim=1, dtype=np.float32_t] period_dts,
              output="stats",
              normalize=True,
+             center=False,
              n_stats=1,
              significance_type='stdmean'):
         """Runs Conditional Entropy calculations on a list of light curves.
@@ -109,9 +110,14 @@ cdef class ConditionalEntropy:
         
         output : {'stats', 'periodogram'}, default='stats'
             Type of output that should be returned
-        
+
         normalize : bool, default=True
-            Whether to normalize the light curve magnitudes
+            Whether to normalize the light curve magnitudes. If true, light
+            curve magnitudes will be normalized to a (0, 1) range
+
+        center : bool, default=False
+            Whether to center the light curve magnitutes. If true, light curve
+            magnitudes will be shifted so that the data have zero mean.
 
         n_stats : int, default=1
             Number of output `Statistics` to return if `output='stats'`
@@ -153,8 +159,16 @@ cdef class ConditionalEntropy:
             times_ptrs.push_back(&time_arr[0])
             times_lens.push_back(len(time_arr))
 
+        if center and normalize:
+            _py_warn_periodfind(
+                'Center and normalize are conflicting settings. Normalize will be ignored.',
+                RuntimeWarning)
+
         mags_use = []
-        if normalize:
+        if center:
+            for mag in mags:
+                mags_use.append(mag - np.mean(mag))
+        elif normalize:
             for mag in mags:
                 min_v = np.min(mag)
                 max_v = np.max(mag)

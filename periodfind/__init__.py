@@ -1,3 +1,4 @@
+import warnings
 import numpy as np
 
 # Copyright 2020 California Institute of Technology. All rights reserved.
@@ -275,3 +276,7 @@ class Periodogram:
             mad=self.mad,
             n=n,
             significance_type=significance_type)
+
+def _py_warn_periodfind(message, type):
+    """Wrapper around warnings.warn for Cython code."""
+    warnings.warn(message, type, stacklevel=2)
