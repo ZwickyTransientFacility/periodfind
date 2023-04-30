@@ -109,7 +109,7 @@ except AttributeError:
     numpy_include = numpy.get_numpy_include()
 
 # Arguments for both NVCC and GCC
-compiler_flags = ['-std=c++11']
+compiler_flags = ['-std=c++11', '-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION']
 gcc_only_flags = []
 nvcc_only_flags = ['-c', '--compiler-options', "'-fPIC'"]
 
@@ -170,7 +170,7 @@ extensions = [
 ]
 
 setup(name="periodfind",
-      version='0.0.4',
+      version='0.0.5',
       description='GPU-accelerated period finding utilities',
       url='https://github.com/ZwickyTransientFacility/periodfind',
       author='Ethan Jaszewski',
