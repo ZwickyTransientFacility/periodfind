@@ -114,7 +114,7 @@ gcc_only_flags = []
 nvcc_only_flags = ['-c', '--compiler-options', "'-fPIC'"]
 
 # Generate the gencode arguments
-compute_capabilities = [35, 37, 50, 52, 60, 61, 70, 75]
+compute_capabilities = [50, 52, 60, 61, 70, 75]
 cuda_arch_flags = [
     f'-gencode=arch=compute_{cap},code=sm_{cap}'
     for cap in compute_capabilities
