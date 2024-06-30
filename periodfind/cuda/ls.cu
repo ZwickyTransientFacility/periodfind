@@ -293,11 +293,12 @@ void LombScargle::CalcLSBatched(const std::vector<float*>& times,
     for (size_t batch_idx = 0; batch_idx < lengths.size(); batch_idx += num_curves) {
         // Copy light curve into device buffer
         //size_t curve_bytes = 0;
-        const size_t curve_bytes = lengths[batch_idx] * sizeof(float);
-        //for(size_t i = 0; i < num_curves; i++)
-        //{
-        //    curve_bytes += lengths[i] * sizeof(float);
-        ////}
+        //const size_t curve_bytes = lengths[batch_idx] * sizeof(float);
+        size_t curve_bytes = 0;
+        for(size_t i = 0; i < num_curves; i++)
+        {
+            curve_bytes += lengths[batch_idx + i] * sizeof(float);
+        }
         cudaMemcpy(dev_times_buffer, times[batch_idx], curve_bytes,
                    cudaMemcpyHostToDevice);
         cudaMemcpy(dev_mags_buffer, mags[batch_idx], curve_bytes,
