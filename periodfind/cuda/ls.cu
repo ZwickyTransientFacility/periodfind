@@ -104,20 +104,21 @@ __global__ void LombScargleKernelBatched(const float* times,
                                          float* periodogram) {
     const size_t thread_x = threadIdx.x + blockIdx.x * blockDim.x;
     const size_t thread_y = threadIdx.y + blockIdx.y * blockDim.y;
-    const size_t curve_idx = 0;
-    //for (size_t curve_idx = 0; curve_idx < num_curves; curve_idx++) {
+
+    for (size_t curve_idx = 0; curve_idx < num_curves; curve_idx++) {
         if (thread_x >= num_periods || thread_y >= num_period_dts) {
             return;
         }
 
 
-        const size_t length = lengths[0];
+        const size_t length = lengths[curve_idx];
+        //printf("(curve_idx, length): (%lu, %lu)\n", curve_idx, length);
         //printf("length: %lu\n", length);
         size_t offset = 0;
-        //for(size_t i = 1; i < curve_idx; i++) // maybe this should start at 1 so it doesn't offset for the first one?
-        //{
-        //    offset += lengths[i];
-        //}
+        for(size_t i = 0; i < curve_idx; i++) // maybe this should start at 1 so it doesn't offset for the first one?
+        {
+            offset += lengths[i];
+        }
 
         // Period and period time derivative
         const float period = periods[thread_x];
@@ -172,7 +173,7 @@ __global__ void LombScargleKernelBatched(const float* times,
                     + (thread_x * num_period_dts + thread_y)] =
             0.5
             * ((numerator_l / denominator_l) + (numerator_r / denominator_r));
-    //}
+    }
 }
 
 //
@@ -242,9 +243,9 @@ void LombScargle::CalcLSBatched(const std::vector<float*>& times,
     // TODO: Look at ways of batching data transfer.
 
     // Size of one periodogram out array, and total periodogram output size.
-    const size_t num_curves = 1;
+    const size_t num_curves = 2;
     size_t per_points = num_periods * num_p_dts;
-    size_t per_out_size = per_points * sizeof(float);
+    size_t per_out_size = num_curves * per_points * sizeof(float);
     size_t per_size_total = per_out_size * lengths.size();
 
     // Copy trial information over
@@ -289,31 +290,39 @@ void LombScargle::CalcLSBatched(const std::vector<float*>& times,
     printf("times.size(), bytes: %lu\t%lu\n", times.size(), times.size() * sizeof(float*));
     printf("mags.size(), bytes: %lu\t%lu\n", mags.size(), mags.size() * sizeof(float*));
     printf("per_out_size: %lu\n", per_out_size);
+    printf("per_size_total: %lu bytes = %lu Kb = %lu Mb\n", per_size_total, per_size_total / 1024, per_size_total / (1024 * 1024));
+    printf("num_periods: %lu\n", num_periods);
+    printf("num_p_dts: %lu\n", num_p_dts);
+    printf("per_points: %lu\n", per_points);
 
     for (size_t batch_idx = 0; batch_idx < lengths.size(); batch_idx += num_curves) {
         // Copy light curve into device buffer
         //size_t curve_bytes = 0;
         //const size_t curve_bytes = lengths[batch_idx] * sizeof(float);
-        size_t curve_bytes = 0;
+        size_t curve_offset = 0;
         for(size_t i = 0; i < num_curves; i++)
         {
-            curve_bytes += lengths[batch_idx + i] * sizeof(float);
+            size_t bytes = lengths[batch_idx + i] * sizeof(float);
+            cudaMemcpy(dev_times_buffer + curve_offset, times[batch_idx + i], bytes, cudaMemcpyHostToDevice);
+            cudaMemcpy(dev_mags_buffer + curve_offset, mags[batch_idx + i], bytes, cudaMemcpyHostToDevice);
+            curve_offset += lengths[batch_idx + i];
         }
-        cudaMemcpy(dev_times_buffer, times[batch_idx], curve_bytes,
+        
+        /*cudaMemcpy(dev_times_buffer, times[batch_idx], curve_bytes,
                    cudaMemcpyHostToDevice);
         cudaMemcpy(dev_mags_buffer, mags[batch_idx], curve_bytes,
-                   cudaMemcpyHostToDevice);
+                   cudaMemcpyHostToDevice);*/
         cudaMemcpy(dev_lengths_buffer, &lengths[batch_idx], num_curves * sizeof(size_t), cudaMemcpyHostToDevice);
 
         // Zero conditional entropy output
-        gpuErrchk(cudaMemset(dev_per, 0, per_out_size));
+        //gpuErrchk(cudaMemset(dev_per, 0, per_out_size));
 
         LombScargleKernelBatched<<<grid_dim, block_dim>>>(
             dev_times_buffer, dev_mags_buffer, dev_lengths_buffer, dev_periods,
             dev_period_dts, num_periods, num_p_dts, num_curves, dev_per);
 
         // Copy periodogram back to host
-        cudaMemcpy(&per_out[batch_idx * per_points], dev_per, num_curves * per_out_size,
+        cudaMemcpy(&per_out[batch_idx * per_points], dev_per, per_out_size,
                    cudaMemcpyDeviceToHost);
     }
 
