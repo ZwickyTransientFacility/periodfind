@@ -128,14 +128,16 @@ class LombScargle {
      * @param num_p_dts number of trial time derivatives
      * @param per_out output periodograms
      */
-    void CalcLSBatched(const std::vector<float*>& times,
-                       const std::vector<float*>& mags,
-                       const std::vector<size_t>& lengths,
-                       const float* periods,
-                       const float* period_dts,
-                       const size_t num_periods,
-                       const size_t num_p_dts,
-                       float* per_out) const;
+    void CalcLSBatched(float* times,
+                                float* mags,
+                                const size_t num_times,
+                                const size_t num_mags,
+                                const std::vector<size_t>& lengths,
+                                const float* periods,
+                                const float* period_dts,
+                                const size_t num_periods,
+                                const size_t num_p_dts,
+                                float* per_out) const;
 
     /**
      * Computes the Lomb-Scargle periodogram for all input light curves.
@@ -161,13 +163,15 @@ class LombScargle {
      *
      * @return host array of periodograms
      */
-    float* CalcLSBatched(const std::vector<float*>& times,
-                         const std::vector<float*>& mags,
-                         const std::vector<size_t>& lengths,
-                         const float* periods,
-                         const float* period_dts,
-                         const size_t num_periods,
-                         const size_t num_p_dts) const;
+    float* CalcLSBatched(float* times,
+                                  float* mags,
+                                  const size_t num_times,
+                                  const size_t num_mags,
+                                  const std::vector<size_t>& lengths,
+                                  const float* periods,
+                                  const float* period_dts,
+                                  const size_t num_periods,
+                                  const size_t num_p_dts) const;
 };
 
 #endif

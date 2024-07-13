@@ -231,8 +231,10 @@ float* LombScargle::CalcLS(float* times,
                          num_periods, num_p_dts);
 }
 
-void LombScargle::CalcLSBatched(const std::vector<float*>& times,
-                                const std::vector<float*>& mags,
+void LombScargle::CalcLSBatched(float* times,
+                                float* mags,
+                                const size_t num_times,
+                                const size_t num_mags,
                                 const std::vector<size_t>& lengths,
                                 const float* periods,
                                 const float* period_dts,
@@ -243,7 +245,7 @@ void LombScargle::CalcLSBatched(const std::vector<float*>& times,
     // TODO: Look at ways of batching data transfer.
 
     // Size of one periodogram out array, and total periodogram output size.
-    const size_t num_curves = 2;
+    const size_t num_curves = 4;
     size_t per_points = num_periods * num_p_dts;
     size_t per_out_size = num_curves * per_points * sizeof(float);
     size_t per_size_total = per_out_size * lengths.size();
@@ -263,7 +265,7 @@ void LombScargle::CalcLSBatched(const std::vector<float*>& times,
     gpuErrchk(cudaMalloc(&dev_per, per_out_size));
 
     // Kernel launch information
-    const size_t x_threads = 256;
+    const size_t x_threads = 512;
     const size_t y_threads = 1;
     const size_t x_blocks = ((num_periods + x_threads - 1) / x_threads);
     const size_t y_blocks = ((num_p_dts + y_threads - 1) / y_threads);
@@ -299,19 +301,20 @@ void LombScargle::CalcLSBatched(const std::vector<float*>& times,
         // Copy light curve into device buffer
         //size_t curve_bytes = 0;
         //const size_t curve_bytes = lengths[batch_idx] * sizeof(float);
-        size_t curve_offset = 0;
+        //size_t curve_offset = 0;
+        size_t curve_bytes = 0;
         for(size_t i = 0; i < num_curves; i++)
         {
-            size_t bytes = lengths[batch_idx + i] * sizeof(float);
-            cudaMemcpy(dev_times_buffer + curve_offset, times[batch_idx + i], bytes, cudaMemcpyHostToDevice);
-            cudaMemcpy(dev_mags_buffer + curve_offset, mags[batch_idx + i], bytes, cudaMemcpyHostToDevice);
-            curve_offset += lengths[batch_idx + i];
+            //size_t curve_bytes = lengths[batch_idx + i] * sizeof(float);
+            //cudaMemcpy(dev_times_buffer + curve_offset, times[batch_idx + i], curve_bytes, cudaMemcpyHostToDevice);
+            //cudaMemcpy(dev_mags_buffer + curve_offset, mags[batch_idx + i], curve_bytes, cudaMemcpyHostToDevice);
+            curve_bytes += lengths[batch_idx + i] * sizeof(float);
         }
         
-        /*cudaMemcpy(dev_times_buffer, times[batch_idx], curve_bytes,
+        cudaMemcpy(dev_times_buffer, times[batch_idx], curve_bytes,
                    cudaMemcpyHostToDevice);
         cudaMemcpy(dev_mags_buffer, mags[batch_idx], curve_bytes,
-                   cudaMemcpyHostToDevice);*/
+                   cudaMemcpyHostToDevice);
         cudaMemcpy(dev_lengths_buffer, &lengths[batch_idx], num_curves * sizeof(size_t), cudaMemcpyHostToDevice);
 
         // Zero conditional entropy output
@@ -335,8 +338,10 @@ void LombScargle::CalcLSBatched(const std::vector<float*>& times,
     gpuErrchk(cudaFree(dev_mags_buffer));
 }
 
-float* LombScargle::CalcLSBatched(const std::vector<float*>& times,
-                                  const std::vector<float*>& mags,
+float* LombScargle::CalcLSBatched(float* times,
+                                  float* mags,
+                                  const size_t num_times,
+                                  const size_t num_mags,
                                   const std::vector<size_t>& lengths,
                                   const float* periods,
                                   const float* period_dts,
