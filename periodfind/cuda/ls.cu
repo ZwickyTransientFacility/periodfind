@@ -108,6 +108,7 @@ __global__ void LombScargleKernelBatched(const float  *times,
 	const size_t thread_x = threadIdx.x + blockIdx.x * blockDim.x;
 	const size_t thread_y = threadIdx.y + blockIdx.y * blockDim.y;
 
+    #pragma unroll
 	for(size_t curve_idx = 0; curve_idx < num_curves; curve_idx++)
 	{
 		if(thread_x >= num_periods || thread_y >= num_period_dts)
@@ -145,7 +146,7 @@ __global__ void LombScargleKernelBatched(const float  *times,
 			float t_corr = t - pdt_corr * t * t;
 			float folded = fabsf(modff(t_corr / period, &i_part));
 
-			sincosf(TWO_PI * folded, &sin, &cos);
+			__sincosf(TWO_PI * folded, &sin, &cos);
 
 			mag_cos += mag * cos;
 			mag_sin += mag * sin;
@@ -156,7 +157,7 @@ __global__ void LombScargleKernelBatched(const float  *times,
 		float sin_sin = static_cast<float>(length) - cos_cos;
 
 		float cos_tau, sin_tau;
-		sincosf(0.5 * atan2f(2.0 * cos_sin, cos_cos - sin_sin), &sin_tau, &cos_tau);
+		__sincosf(0.5 * atan2f(2.0 * cos_sin, cos_cos - sin_sin), &sin_tau, &cos_tau);
 
 		float numerator_l = cos_tau * mag_cos + sin_tau * mag_sin;
 		float numerator_r = cos_tau * mag_sin - sin_tau * mag_cos;

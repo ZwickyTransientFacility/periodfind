@@ -18,6 +18,8 @@ set_target_properties(periodfind
 
 set_target_properties(periodfind PROPERTIES PUBLIC_HEADER "${HEADER_FILES}")
 
+target_compile_options(periodfind PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-use_fast_math>)
+
 install(TARGETS periodfind
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/periodfind)
