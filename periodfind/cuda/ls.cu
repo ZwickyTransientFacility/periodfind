@@ -280,19 +280,19 @@ void LombScargle::CalcLSBatched(const std::vector<float *> &times,
 	gpuErrchk(cudaMalloc(&dev_mags_buffer, buffer_bytes));
 	gpuErrchk(cudaMalloc(&dev_lengths_buffer, num_curves * sizeof(size_t)));
 
-	std::chrono::high_resolution_clock::time_point start =
-		std::chrono::high_resolution_clock::now();
+	std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
 
-	// Calculate the total number of elements for contiguous arrays
 	size_t total_elements = 0;
 	for(size_t i = 0; i < lengths.size(); i++)
 	{
 		total_elements += lengths[i];
 	}
 
-	// Allocate and copy data to contiguous memory on host
-	float *host_times_contiguous = new float[total_elements];
-	float *host_mags_contiguous  = new float[total_elements];
+	float *host_times_contiguous;
+	float *host_mags_contiguous;
+    cudaHostAlloc((void**) &host_times_contiguous, total_elements * sizeof(float), cudaHostAllocDefault);
+    cudaHostAlloc((void**) &host_mags_contiguous, total_elements * sizeof(float), cudaHostAllocDefault);
+
 	size_t contiguous_offset     = 0;
 
 	for(size_t i = 0; i < lengths.size(); i++)
@@ -320,39 +320,73 @@ void LombScargle::CalcLSBatched(const std::vector<float *> &times,
 	std::chrono::duration<double>                  elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 	printf("Time for extra cpu-side memcpy (to be removed): %f seconds\n", elapsed.count());
 
-	size_t curve_offset = 0;
-	for(size_t batch_idx = 0; batch_idx < lengths.size(); batch_idx += num_curves)
-	{
-		size_t curve_bytes = 0;
+    cudaStream_t stream1;
+    cudaStream_t stream2;
+    cudaStreamCreate(&stream1);
+    cudaStreamCreate(&stream2);
 
-		for(size_t i = 0; i < num_curves && batch_idx + i < lengths.size(); i++)
-		{
-			curve_bytes += lengths[batch_idx + i] * sizeof(float);
-		}
+    size_t curve_offset = 0;
+    for(size_t batch_idx = 0; batch_idx < lengths.size(); batch_idx += 2 * num_curves)
+    {
+        size_t curve_bytes1 = 0;
+        size_t curve_bytes2 = 0;
 
-		cudaMemcpy(dev_times_buffer, host_times_contiguous + curve_offset, curve_bytes, cudaMemcpyHostToDevice);
-		cudaMemcpy(dev_mags_buffer, host_mags_contiguous + curve_offset, curve_bytes, cudaMemcpyHostToDevice);
-		cudaMemcpy(dev_lengths_buffer, &lengths[batch_idx], num_curves * sizeof(size_t), cudaMemcpyHostToDevice);
+        for(size_t i = 0; i < num_curves && batch_idx + i < lengths.size(); i++)
+        {
+            curve_bytes1 += lengths[batch_idx + i] * sizeof(float);
+        }
 
-		LombScargleKernelBatched<<<grid_dim, block_dim>>>(
-			dev_times_buffer,
-			dev_mags_buffer,
-			dev_lengths_buffer,
-			dev_periods,
-			dev_period_dts,
-			num_periods,
-			num_p_dts,
-			num_curves,
-			dev_per);
+        for(size_t i = 0; i < num_curves && batch_idx + num_curves + i < lengths.size(); i++)
+        {
+            curve_bytes2 += lengths[batch_idx + num_curves + i] * sizeof(float);
+        }
 
-		cudaMemcpy(&per_out[batch_idx * per_points], dev_per, per_out_size, cudaMemcpyDeviceToHost);
+        // Copy data to device using streams
+        cudaMemcpyAsync(dev_times_buffer, host_times_contiguous + curve_offset, curve_bytes1, cudaMemcpyHostToDevice, stream1);
+        cudaMemcpyAsync(dev_mags_buffer, host_mags_contiguous + curve_offset, curve_bytes1, cudaMemcpyHostToDevice, stream1);
+        cudaMemcpyAsync(dev_lengths_buffer, &lengths[batch_idx], num_curves * sizeof(size_t), cudaMemcpyHostToDevice, stream1);
 
-		curve_offset += curve_bytes / sizeof(float);
-	}
+        cudaMemcpyAsync(dev_times_buffer + buffer_length * num_curves, host_times_contiguous + curve_offset + curve_bytes1 / sizeof(float), curve_bytes2, cudaMemcpyHostToDevice, stream2);
+        cudaMemcpyAsync(dev_mags_buffer + buffer_length * num_curves, host_mags_contiguous + curve_offset + curve_bytes1 / sizeof(float), curve_bytes2, cudaMemcpyHostToDevice, stream2);
+        cudaMemcpyAsync(dev_lengths_buffer + num_curves, &lengths[batch_idx + num_curves], num_curves * sizeof(size_t), cudaMemcpyHostToDevice, stream2);
+
+        // Launch kernel using streams
+        LombScargleKernelBatched<<<grid_dim, block_dim, 0, stream1>>>(
+            dev_times_buffer,
+            dev_mags_buffer,
+            dev_lengths_buffer,
+            dev_periods,
+            dev_period_dts,
+            num_periods,
+            num_p_dts,
+            num_curves,
+            dev_per);
+
+        cudaMemcpyAsync(&per_out[batch_idx * per_points], dev_per, per_out_size, cudaMemcpyDeviceToHost, stream1);
+
+        if (curve_bytes2 > 0)
+        {
+            LombScargleKernelBatched<<<grid_dim, block_dim, 0, stream2>>>(
+                dev_times_buffer + buffer_length * num_curves,
+                dev_mags_buffer + buffer_length * num_curves,
+                dev_lengths_buffer + num_curves,
+                dev_periods,
+                dev_period_dts,
+                num_periods,
+                num_p_dts,
+                num_curves,
+                dev_per);
+
+            cudaMemcpyAsync(&per_out[(batch_idx + num_curves) * per_points], dev_per, per_out_size, cudaMemcpyDeviceToHost, stream2);
+        }
+
+        curve_offset += (curve_bytes1 + curve_bytes2) / sizeof(float);
+    }
+
 
 	// Free host and device memory
-	delete[] host_times_contiguous;
-	delete[] host_mags_contiguous;
+    cudaFreeHost(host_times_contiguous);
+    cudaFreeHost(host_mags_contiguous);
 	gpuErrchk(cudaFree(dev_periods));
 	gpuErrchk(cudaFree(dev_period_dts));
 	gpuErrchk(cudaFree(dev_per));
