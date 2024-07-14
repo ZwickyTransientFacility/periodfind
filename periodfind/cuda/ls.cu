@@ -7,6 +7,7 @@
 
 #include <algorithm>
 
+#include <chrono>
 #include <cstdio>
 
 #include "cuda_runtime.h"
@@ -110,12 +111,13 @@ __global__ void LombScargleKernelBatched(const float* times,
             return;
         }
 
-
         const size_t length = lengths[curve_idx];
-        //printf("(curve_idx, length): (%lu, %lu)\n", curve_idx, length);
-        //printf("length: %lu\n", length);
+        // printf("(curve_idx, length): (%lu, %lu)\n", curve_idx, length);
+        // printf("length: %lu\n", length);
         size_t offset = 0;
-        for(size_t i = 0; i < curve_idx; i++) // maybe this should start at 1 so it doesn't offset for the first one?
+        for (size_t i = 0; i < curve_idx;
+             i++)  // maybe this should start at 1 so it doesn't offset for the
+                   // first one?
         {
             offset += lengths[i];
         }
@@ -231,26 +233,25 @@ float* LombScargle::CalcLS(float* times,
                          num_periods, num_p_dts);
 }
 
-void LombScargle::CalcLSBatched(float* times,
-                                float* mags,
-                                const size_t num_times,
-                                const size_t num_mags,
+// There's no real point in having times and mags be a vector
+// because the lengths vector already keeps a list of how long each
+// float* is. They should be reorganized to be a contiguous block, but that data
+// processing needs to happen on the python side. On the other hand, this takes
+// less than a tenth of a second to convert
+void LombScargle::CalcLSBatched(const std::vector<float*>& times,
+                                const std::vector<float*>& mags,
                                 const std::vector<size_t>& lengths,
                                 const float* periods,
                                 const float* period_dts,
                                 const size_t num_periods,
                                 const size_t num_p_dts,
                                 float* per_out) const {
-    // TODO: Use async memory transferring
-    // TODO: Look at ways of batching data transfer.
-
-    // Size of one periodogram out array, and total periodogram output size.
     const size_t num_curves = 4;
     size_t per_points = num_periods * num_p_dts;
     size_t per_out_size = num_curves * per_points * sizeof(float);
     size_t per_size_total = per_out_size * lengths.size();
 
-    // Copy trial information over
+    // Allocate device memory
     float* dev_periods;
     float* dev_period_dts;
     gpuErrchk(cudaMalloc(&dev_periods, num_periods * sizeof(float)));
@@ -260,76 +261,105 @@ void LombScargle::CalcLSBatched(float* times,
     gpuErrchk(cudaMemcpy(dev_period_dts, period_dts, num_p_dts * sizeof(float),
                          cudaMemcpyHostToDevice));
 
-    // Intermediate conditional entropy memory
     float* dev_per;
     gpuErrchk(cudaMalloc(&dev_per, per_out_size));
 
-    // Kernel launch information
-    const size_t x_threads = 512;
+    const size_t x_threads = 256;
     const size_t y_threads = 1;
-    const size_t x_blocks = ((num_periods + x_threads - 1) / x_threads);
-    const size_t y_blocks = ((num_p_dts + y_threads - 1) / y_threads);
+    const size_t x_blocks = (num_periods + x_threads - 1) / x_threads;
+    const size_t y_blocks = (num_p_dts + y_threads - 1) / y_threads;
     const dim3 block_dim = dim3(x_threads, y_threads);
     const dim3 grid_dim = dim3(x_blocks, y_blocks);
 
-    // Buffer size (large enough for longest light curve)
+    // Determine the maximum buffer size needed
     auto max_length = std::max_element(lengths.begin(), lengths.end());
     const size_t buffer_length = *max_length;
     const size_t buffer_bytes = num_curves * buffer_length * sizeof(float);
 
+    // Allocate device buffers
     float* dev_times_buffer;
     float* dev_mags_buffer;
     size_t* dev_lengths_buffer;
     gpuErrchk(cudaMalloc(&dev_times_buffer, buffer_bytes));
     gpuErrchk(cudaMalloc(&dev_mags_buffer, buffer_bytes));
     gpuErrchk(cudaMalloc(&dev_lengths_buffer, num_curves * sizeof(size_t)));
-    
+
+    std::chrono::high_resolution_clock::time_point start =
+        std::chrono::high_resolution_clock::now();
+
+    // Calculate the total number of elements for contiguous arrays
+    size_t total_elements = 0;
+    for (size_t i = 0; i < lengths.size(); i++) {
+        total_elements += lengths[i];
+    }
+
+    // Allocate and copy data to contiguous memory on host
+    float* host_times_contiguous = new float[total_elements];
+    float* host_mags_contiguous = new float[total_elements];
+    size_t contiguous_offset = 0;
+
+    for (size_t i = 0; i < lengths.size(); i++) {
+        memcpy(host_times_contiguous + contiguous_offset, times[i],
+               lengths[i] * sizeof(float));
+        memcpy(host_mags_contiguous + contiguous_offset, mags[i],
+               lengths[i] * sizeof(float));
+        contiguous_offset += lengths[i];
+    }
+
+    printf("lengths.size: %zu\n", lengths.size());
 
     printf("num_curves: %lu\n", num_curves);
     printf("buffer length (max_length): %lu\n", buffer_length);
     printf("buffer_bytes: %lu\n", buffer_bytes);
-    printf("lengths.size(), bytes: %lu\t%lu\n", lengths.size(), lengths.size() * sizeof(size_t));
-    printf("times.size(), bytes: %lu\t%lu\n", times.size(), times.size() * sizeof(float*));
-    printf("mags.size(), bytes: %lu\t%lu\n", mags.size(), mags.size() * sizeof(float*));
+    printf("lengths.size(), bytes: %lu\t%lu\n", lengths.size(),
+           lengths.size() * sizeof(size_t));
+    printf("times.size(), bytes: %lu\t%lu\n", times.size(),
+           times.size() * sizeof(float*));
+    printf("mags.size(), bytes: %lu\t%lu\n", mags.size(),
+           mags.size() * sizeof(float*));
     printf("per_out_size: %lu\n", per_out_size);
-    printf("per_size_total: %lu bytes = %lu Kb = %lu Mb\n", per_size_total, per_size_total / 1024, per_size_total / (1024 * 1024));
+    printf("per_size_total: %lu bytes = %lu Kb = %lu Mb\n", per_size_total,
+           per_size_total / 1024, per_size_total / (1024 * 1024));
     printf("num_periods: %lu\n", num_periods);
     printf("num_p_dts: %lu\n", num_p_dts);
     printf("per_points: %lu\n", per_points);
 
-    for (size_t batch_idx = 0; batch_idx < lengths.size(); batch_idx += num_curves) {
-        // Copy light curve into device buffer
-        //size_t curve_bytes = 0;
-        //const size_t curve_bytes = lengths[batch_idx] * sizeof(float);
-        //size_t curve_offset = 0;
+    std::chrono::high_resolution_clock::time_point end =
+        std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
+    printf("Time for extra cpu-side memcpy (to be removed): %f seconds\n",
+           elapsed.count());
+
+    size_t curve_offset = 0;
+    for (size_t batch_idx = 0; batch_idx < lengths.size();
+         batch_idx += num_curves) {
         size_t curve_bytes = 0;
-        for(size_t i = 0; i < num_curves; i++)
-        {
-            //size_t curve_bytes = lengths[batch_idx + i] * sizeof(float);
-            //cudaMemcpy(dev_times_buffer + curve_offset, times[batch_idx + i], curve_bytes, cudaMemcpyHostToDevice);
-            //cudaMemcpy(dev_mags_buffer + curve_offset, mags[batch_idx + i], curve_bytes, cudaMemcpyHostToDevice);
+
+        for (size_t i = 0; i < num_curves && batch_idx + i < lengths.size();
+             i++) {
             curve_bytes += lengths[batch_idx + i] * sizeof(float);
         }
-        
-        cudaMemcpy(dev_times_buffer, times[batch_idx], curve_bytes,
-                   cudaMemcpyHostToDevice);
-        cudaMemcpy(dev_mags_buffer, mags[batch_idx], curve_bytes,
-                   cudaMemcpyHostToDevice);
-        cudaMemcpy(dev_lengths_buffer, &lengths[batch_idx], num_curves * sizeof(size_t), cudaMemcpyHostToDevice);
 
-        // Zero conditional entropy output
-        //gpuErrchk(cudaMemset(dev_per, 0, per_out_size));
+        cudaMemcpy(dev_times_buffer, host_times_contiguous + curve_offset,
+                   curve_bytes, cudaMemcpyHostToDevice);
+        cudaMemcpy(dev_mags_buffer, host_mags_contiguous + curve_offset,
+                   curve_bytes, cudaMemcpyHostToDevice);
+        cudaMemcpy(dev_lengths_buffer, &lengths[batch_idx],
+                   num_curves * sizeof(size_t), cudaMemcpyHostToDevice);
 
         LombScargleKernelBatched<<<grid_dim, block_dim>>>(
             dev_times_buffer, dev_mags_buffer, dev_lengths_buffer, dev_periods,
             dev_period_dts, num_periods, num_p_dts, num_curves, dev_per);
 
-        // Copy periodogram back to host
         cudaMemcpy(&per_out[batch_idx * per_points], dev_per, per_out_size,
                    cudaMemcpyDeviceToHost);
+        curve_offset += curve_bytes / sizeof(float);
     }
 
-    // Free all of the GPU memory
+    // Free host and device memory
+    delete[] host_times_contiguous;
+    delete[] host_mags_contiguous;
     gpuErrchk(cudaFree(dev_periods));
     gpuErrchk(cudaFree(dev_period_dts));
     gpuErrchk(cudaFree(dev_per));
@@ -338,10 +368,8 @@ void LombScargle::CalcLSBatched(float* times,
     gpuErrchk(cudaFree(dev_mags_buffer));
 }
 
-float* LombScargle::CalcLSBatched(float* times,
-                                  float* mags,
-                                  const size_t num_times,
-                                  const size_t num_mags,
+float* LombScargle::CalcLSBatched(const std::vector<float*>& times,
+                                  const std::vector<float*>& mags,
                                   const std::vector<size_t>& lengths,
                                   const float* periods,
                                   const float* period_dts,
