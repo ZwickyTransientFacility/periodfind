@@ -273,8 +273,6 @@ void LombScargle::CalcLSBatched(const std::vector<float *> &times,
 	gpuErrchk(cudaMalloc(&dev_mags_buffer, buffer_bytes));
 	gpuErrchk(cudaMalloc(&dev_lengths_buffer, num_curves * sizeof(size_t)));
 
-	std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
-
 	size_t total_elements = 0;
 	for(size_t i = 0; i < lengths.size(); i++)
 	{
