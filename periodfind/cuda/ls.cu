@@ -315,15 +315,14 @@ void LombScargle::CalcLSBatched(const std::vector<float *> &times,
 				break;
 			}
 
-			size_t curve_bytes = 0;
+			size_t curve_bytes           = 0;
+			size_t num_curves_to_process = stream_batch_idx + num_curves < lengths.size() ? num_curves : lengths.size() - stream_batch_idx;
+			size_t actual_per_out_size   = num_curves_to_process * per_points * sizeof(float);
 
 			for(size_t i = 0; i < num_curves && stream_batch_idx + i < lengths.size(); i++)
 			{
 				curve_bytes += lengths[stream_batch_idx + i] * sizeof(float);
 			}
-
-			size_t num_curves_to_process = stream_batch_idx + num_curves < lengths.size() ? num_curves : lengths.size() - stream_batch_idx;
-			size_t actual_per_out_size   = num_curves_to_process * per_points * sizeof(float);
 
 			gpuErrchk(cudaMemcpyAsync(dev_times_buffer, host_times_contiguous + curve_offset, curve_bytes, cudaMemcpyHostToDevice, streams[stream_idx]));
 			gpuErrchk(cudaMemcpyAsync(dev_mags_buffer, host_mags_contiguous + curve_offset, curve_bytes, cudaMemcpyHostToDevice, streams[stream_idx]));
@@ -344,17 +343,12 @@ void LombScargle::CalcLSBatched(const std::vector<float *> &times,
 
 			curve_offset += curve_bytes / sizeof(float);
 		}
-
-		// Synchronize the streams after processing the batch
-		for(size_t i = 0; i < num_streams; ++i)
-		{
-			gpuErrchk(cudaStreamSynchronize(streams[i]));
-		}
 	}
 
 	for(size_t i = 0; i < num_streams; ++i)
 	{
 		gpuErrchk(cudaStreamDestroy(streams[i]));
+		gpuErrchk(cudaStreamSynchronize(streams[i]));
 	}
 
 	cudaFreeHost(host_times_contiguous);
