@@ -102,14 +102,14 @@ __global__ void LombScargleKernelBatched(const float *__restrict__ times,
 										 const float *__restrict__ period_dts,
 										 const size_t num_periods,
 										 const size_t num_period_dts,
-										 const size_t num_curves,
+										 const size_t num_batched_curves,
 										 float *__restrict__ periodogram)
 {
 	const size_t thread_x = threadIdx.x + blockIdx.x * blockDim.x;
 	const size_t thread_y = threadIdx.y + blockIdx.y * blockDim.y;
 
 #pragma unroll
-	for(size_t curve_idx = 0; curve_idx < num_curves; curve_idx++)
+	for(size_t curve_idx = 0; curve_idx < num_batched_curves; curve_idx++)
 	{
 		if(thread_x >= num_periods || thread_y >= num_period_dts)
 		{
@@ -231,6 +231,7 @@ float *LombScargle::CalcLS(float       *times,
 }
 
 
+// TODO: Add a parameter to batch curves
 void LombScargle::CalcLSBatched(const std::vector<float *> &times,
 								const std::vector<float *> &mags,
 								const std::vector<size_t>  &lengths,
@@ -240,9 +241,9 @@ void LombScargle::CalcLSBatched(const std::vector<float *> &times,
 								const size_t num_p_dts,
 								float *__restrict__ per_out) const
 {
-	const size_t num_curves     = 8;
+	const size_t num_batched_curves     = 64;
 	size_t       per_points     = num_periods * num_p_dts;
-	size_t       per_out_size   = num_curves * per_points * sizeof(float);
+	size_t       per_out_size   = num_batched_curves * per_points * sizeof(float);
 	size_t       per_size_total = per_points * sizeof(float) * lengths.size();
 
 	float *dev_periods;
@@ -264,14 +265,14 @@ void LombScargle::CalcLSBatched(const std::vector<float *> &times,
 
 	auto         max_length    = std::max_element(lengths.begin(), lengths.end());
 	const size_t buffer_length = *max_length;
-	const size_t buffer_bytes  = num_curves * buffer_length * sizeof(float);
+	const size_t buffer_bytes  = num_batched_curves * buffer_length * sizeof(float);
 
 	float  *dev_times_buffer;
 	float  *dev_mags_buffer;
 	size_t *dev_lengths_buffer;
 	gpuErrchk(cudaMalloc(&dev_times_buffer, buffer_bytes));
 	gpuErrchk(cudaMalloc(&dev_mags_buffer, buffer_bytes));
-	gpuErrchk(cudaMalloc(&dev_lengths_buffer, num_curves * sizeof(size_t)));
+	gpuErrchk(cudaMalloc(&dev_lengths_buffer, num_batched_curves * sizeof(size_t)));
 
 	size_t total_elements = 0;
 	for(size_t i = 0; i < lengths.size(); i++)
@@ -303,21 +304,21 @@ void LombScargle::CalcLSBatched(const std::vector<float *> &times,
 	size_t curve_offset = 0;
 
 #pragma unroll
-	for(size_t batch_idx = 0; batch_idx < lengths.size(); batch_idx += num_curves * num_streams)
+	for(size_t batch_idx = 0; batch_idx < lengths.size(); batch_idx += num_batched_curves * num_streams)
 	{
 		for(size_t stream_idx = 0; stream_idx < num_streams; ++stream_idx)
 		{
-			size_t stream_batch_idx = batch_idx + stream_idx * num_curves;
+			size_t stream_batch_idx = batch_idx + stream_idx * num_batched_curves;
 			if(stream_batch_idx >= lengths.size())
 			{
 				break;
 			}
 
 			size_t curve_bytes           = 0;
-			size_t num_curves_to_process = stream_batch_idx + num_curves < lengths.size() ? num_curves : lengths.size() - stream_batch_idx;
+			size_t num_curves_to_process = stream_batch_idx + num_batched_curves < lengths.size() ? num_batched_curves : lengths.size() - stream_batch_idx;
 			size_t actual_per_out_size   = num_curves_to_process * per_points * sizeof(float);
 
-			for(size_t i = 0; i < num_curves && stream_batch_idx + i < lengths.size(); i++)
+			for(size_t i = 0; i < num_batched_curves && stream_batch_idx + i < lengths.size(); i++)
 			{
 				curve_bytes += lengths[stream_batch_idx + i] * sizeof(float);
 			}
