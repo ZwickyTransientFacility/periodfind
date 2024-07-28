@@ -414,9 +414,6 @@ void ConditionalEntropy::CalcCEValsBatched(const std::vector<float *> &times,
 										   const size_t num_p_dts,
 										   float *__restrict__ ce_out) const
 {
-	// TODO: Use async memory transferring
-	// TODO: Look at ways of batching data transfer.
-
 	// Size of one CE out array, and total CE output size.
 	size_t ce_out_size   = num_periods * num_p_dts * sizeof(float);
 	size_t ce_size_total = ce_out_size * lengths.size();
@@ -459,12 +456,11 @@ void ConditionalEntropy::CalcCEValsBatched(const std::vector<float *> &times,
 	gpuErrchk(cudaMalloc(&dev_times_buffer, buffer_bytes));
 	gpuErrchk(cudaMalloc(&dev_mags_buffer, buffer_bytes));
 
-    size_t total_elements = 0;
+	size_t total_elements = 0;
 	for(size_t i = 0; i < lengths.size(); i++)
 	{
 		total_elements += lengths[i];
 	}
-
 
 	size_t contiguous_offset = 0;
 	float *__restrict__ host_times_contiguous;
@@ -479,44 +475,60 @@ void ConditionalEntropy::CalcCEValsBatched(const std::vector<float *> &times,
 		contiguous_offset += lengths[i];
 	}
 
-
-	size_t curve_offset = 0;
-	for(size_t i = 0; i < lengths.size(); i++)
+	const size_t num_streams = 3;
+	cudaStream_t streams[num_streams];
+	for(size_t i = 0; i < num_streams; i++)
 	{
-		// Copy light curve into device buffer
-		const size_t curve_bytes = lengths[i] * sizeof(float);
-		gpuErrchk(cudaMemcpy(dev_times_buffer, host_times_contiguous + curve_offset, curve_bytes, cudaMemcpyHostToDevice));
-		gpuErrchk(cudaMemcpy(dev_mags_buffer, host_mags_contiguous + curve_offset, curve_bytes, cudaMemcpyHostToDevice));
-
-		// Zero conditional entropy output
-		gpuErrchk(cudaMemset(dev_ces, 0, ce_out_size));
-
-		// NOTE: A ConditionalEntropy object is small enough that we can pass it
-		//       in the registers by dereferencing it.
-
-		FoldBinKernel<<<grid_dim_fb, num_threads_fb, shared_bytes_fb>>>(
-			dev_times_buffer, dev_mags_buffer, lengths[i], dev_periods,
-			dev_period_dts, *this, dev_hists);
-
-		ConditionalEntropyKernel<<<num_blocks_ce, num_threads_ce,
-								   shared_bytes_ce>>>(dev_hists, num_hists,
-													  *this, dev_ces);
-
-		// Copy CE data back to host
-		gpuErrchk(cudaMemcpy(&ce_out[i * num_hists], dev_ces, ce_out_size,
-							 cudaMemcpyDeviceToHost));
-
-		curve_offset += curve_bytes / sizeof(float);
+		gpuErrchk(cudaStreamCreate(&streams[i]));
 	}
 
-	// Free all of the GPU memory
+	size_t curve_offset = 0;
+	for(size_t batch_idx = 0; batch_idx < lengths.size(); batch_idx += num_streams)
+	{
+		for(size_t stream_idx = 0; stream_idx < num_streams; stream_idx++)
+		{
+			const size_t stream_batch_idx = batch_idx + stream_idx;
+
+			if(stream_batch_idx >= lengths.size())
+			{
+				break;
+			}
+
+			const size_t curve_bytes = lengths[stream_batch_idx] * sizeof(float);
+			gpuErrchk(cudaMemcpyAsync(dev_times_buffer, host_times_contiguous + curve_offset, curve_bytes, cudaMemcpyHostToDevice, streams[stream_idx]));
+			gpuErrchk(cudaMemcpyAsync(dev_mags_buffer, host_mags_contiguous + curve_offset, curve_bytes, cudaMemcpyHostToDevice, streams[stream_idx]));
+
+			gpuErrchk(cudaMemsetAsync(dev_ces, 0, ce_out_size, streams[stream_idx]));
+
+			FoldBinKernel<<<grid_dim_fb, num_threads_fb, shared_bytes_fb, streams[stream_idx]>>>(
+				dev_times_buffer, dev_mags_buffer, lengths[stream_batch_idx], dev_periods,
+				dev_period_dts, *this, dev_hists);
+
+			ConditionalEntropyKernel<<<num_blocks_ce, num_threads_ce, shared_bytes_ce, streams[stream_idx]>>>(
+				dev_hists, num_hists, *this, dev_ces);
+
+			gpuErrchk(cudaMemcpyAsync(&ce_out[stream_batch_idx * num_hists], dev_ces, ce_out_size, cudaMemcpyDeviceToHost, streams[stream_idx]));
+
+			curve_offset += curve_bytes / sizeof(float);
+		}
+	}
+
+	for(size_t i = 0; i < num_streams; ++i)
+	{
+		gpuErrchk(cudaStreamSynchronize(streams[i]));
+		gpuErrchk(cudaStreamDestroy(streams[i]));
+	}
+
 	gpuErrchk(cudaFree(dev_periods));
 	gpuErrchk(cudaFree(dev_period_dts));
 	gpuErrchk(cudaFree(dev_hists));
 	gpuErrchk(cudaFree(dev_ces));
 	gpuErrchk(cudaFree(dev_times_buffer));
 	gpuErrchk(cudaFree(dev_mags_buffer));
+	cudaFreeHost(host_times_contiguous);
+	cudaFreeHost(host_mags_contiguous);
 }
+
 
 float *ConditionalEntropy::CalcCEValsBatched(const std::vector<float *> &times,
 											 const std::vector<float *> &mags,
