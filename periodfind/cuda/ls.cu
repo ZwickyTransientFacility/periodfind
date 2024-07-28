@@ -347,10 +347,6 @@ void LombScargle::CalcLSBatched(const std::vector<float *> &times,
 	for(size_t i = 0; i < num_streams; ++i)
 	{
 		gpuErrchk(cudaStreamSynchronize(streams[i]));
-	}
-
-	for(size_t i = 0; i < num_streams; ++i)
-	{
 		gpuErrchk(cudaStreamDestroy(streams[i]));
 	}
 
