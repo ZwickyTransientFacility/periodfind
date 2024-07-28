@@ -426,10 +426,8 @@ void ConditionalEntropy::CalcCEValsBatched(const std::vector<float *> &times,
 	float *dev_period_dts;
 	gpuErrchk(cudaMalloc(&dev_periods, num_periods * sizeof(float)));
 	gpuErrchk(cudaMalloc(&dev_period_dts, num_p_dts * sizeof(float)));
-	gpuErrchk(cudaMemcpy(dev_periods, periods, num_periods * sizeof(float),
-						 cudaMemcpyHostToDevice));
-	gpuErrchk(cudaMemcpy(dev_period_dts, period_dts, num_p_dts * sizeof(float),
-						 cudaMemcpyHostToDevice));
+	gpuErrchk(cudaMemcpy(dev_periods, periods, num_periods * sizeof(float), cudaMemcpyHostToDevice));
+	gpuErrchk(cudaMemcpy(dev_period_dts, period_dts, num_p_dts * sizeof(float), cudaMemcpyHostToDevice));
 
 	// Intermediate histogram memory
 	size_t num_hists  = num_periods * num_p_dts;
@@ -461,14 +459,34 @@ void ConditionalEntropy::CalcCEValsBatched(const std::vector<float *> &times,
 	gpuErrchk(cudaMalloc(&dev_times_buffer, buffer_bytes));
 	gpuErrchk(cudaMalloc(&dev_mags_buffer, buffer_bytes));
 
+    size_t total_elements = 0;
+	for(size_t i = 0; i < lengths.size(); i++)
+	{
+		total_elements += lengths[i];
+	}
+
+
+	size_t contiguous_offset = 0;
+	float *__restrict__ host_times_contiguous;
+	float *__restrict__ host_mags_contiguous;
+	gpuErrchk(cudaHostAlloc((void **) &host_times_contiguous, total_elements * sizeof(float), cudaHostAllocDefault));
+	gpuErrchk(cudaHostAlloc((void **) &host_mags_contiguous, total_elements * sizeof(float), cudaHostAllocDefault));
+
+	for(size_t i = 0; i < lengths.size(); i++)
+	{
+		memcpy(host_times_contiguous + contiguous_offset, times[i], lengths[i] * sizeof(float));
+		memcpy(host_mags_contiguous + contiguous_offset, mags[i], lengths[i] * sizeof(float));
+		contiguous_offset += lengths[i];
+	}
+
+
+	size_t curve_offset = 0;
 	for(size_t i = 0; i < lengths.size(); i++)
 	{
 		// Copy light curve into device buffer
 		const size_t curve_bytes = lengths[i] * sizeof(float);
-		gpuErrchk(cudaMemcpy(dev_times_buffer, times[i], curve_bytes,
-							 cudaMemcpyHostToDevice));
-		gpuErrchk(cudaMemcpy(dev_mags_buffer, mags[i], curve_bytes,
-							 cudaMemcpyHostToDevice));
+		gpuErrchk(cudaMemcpy(dev_times_buffer, host_times_contiguous + curve_offset, curve_bytes, cudaMemcpyHostToDevice));
+		gpuErrchk(cudaMemcpy(dev_mags_buffer, host_mags_contiguous + curve_offset, curve_bytes, cudaMemcpyHostToDevice));
 
 		// Zero conditional entropy output
 		gpuErrchk(cudaMemset(dev_ces, 0, ce_out_size));
@@ -487,6 +505,8 @@ void ConditionalEntropy::CalcCEValsBatched(const std::vector<float *> &times,
 		// Copy CE data back to host
 		gpuErrchk(cudaMemcpy(&ce_out[i * num_hists], dev_ces, ce_out_size,
 							 cudaMemcpyDeviceToHost));
+
+		curve_offset += curve_bytes / sizeof(float);
 	}
 
 	// Free all of the GPU memory
