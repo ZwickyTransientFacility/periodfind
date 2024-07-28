@@ -318,7 +318,7 @@ void LombScargle::CalcLSBatched(const std::vector<float *> &times,
 			size_t num_curves_to_process = stream_batch_idx + num_batched_curves < lengths.size() ? num_batched_curves : lengths.size() - stream_batch_idx;
 			size_t actual_per_out_size   = num_curves_to_process * per_points * sizeof(float);
 
-			for(size_t i = 0; i < num_batched_curves && stream_batch_idx + i < lengths.size(); i++)
+			for(size_t i = 0; i < num_curves_to_process && stream_batch_idx + i < lengths.size(); i++)
 			{
 				curve_bytes += lengths[stream_batch_idx + i] * sizeof(float);
 			}
