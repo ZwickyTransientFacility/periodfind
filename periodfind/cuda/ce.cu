@@ -207,7 +207,7 @@ __global__ void ConditionalEntropyKernel(const float *__restrict__ hists,
 										 float *__restrict__ ce_vals)
 {
 	// Shared memory scratch space
-	extern __shared__ float scratch[];
+	extern __shared__ float shared_hists[];
 
 	// Which histogram row this thread is summing
 	size_t idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -224,23 +224,23 @@ __global__ void ConditionalEntropyKernel(const float *__restrict__ hists,
 	// Index in the histogram array corresponding to the start of this row
 	const size_t offset = idx * h_params.NumMagBins();
 
-	// Accumulate into shared memory (compute p(phi_j))
-	scratch[tid] = 0;
+
+	float local_sum = 0.0f;
 	for(size_t i = 0; i < h_params.NumMagBins(); i++)
 	{
-		scratch[tid] += hists[i + offset];
+		local_sum += hists[i + offset];
 	}
 
 	// Compute per-phase-bin conditional entropy
 	// TODO: remove use of global mem?
-	float p_j    = scratch[tid]; // Store p_j
-	scratch[tid] = 0;            // Reset shmem before summing
+	float p_j    = local_sum; // Store p_j
+	local_sum = 0.0f;
 	for(size_t i = 0; i < h_params.NumMagBins(); i++)
 	{
 		float p_ij = hists[i + offset];
 		if(p_ij != 0)
 		{
-			scratch[tid] += p_ij * logf(p_j / p_ij);
+			local_sum += p_ij * logf(p_j / p_ij);
 		}
 	}
 
@@ -248,7 +248,7 @@ __global__ void ConditionalEntropyKernel(const float *__restrict__ hists,
 	// entropy for the histogram.
 	// TODO: Replace with shared memory reduction of some kind. *yikes*
 	size_t ce_idx = idx / h_params.NumPhaseBins();
-	atomicAdd(&ce_vals[ce_idx], scratch[tid]);
+	atomicAdd(&ce_vals[ce_idx], local_sum);
 }
 
 //
