@@ -191,8 +191,11 @@ __global__ void FoldBinKernel(const float *__restrict__ times,
  * Internally, each thread is responsible for first computing the conditional
  * entropy of one phase bin of the input (disregarding histogram boundaries),
  * then the values for each thread are accumulated directly into global memory
- * to avoid potential inter-block conflicts. The computation uses shared memory
- * equal to 4 * Number of Threads bytes.
+ * to avoid potential inter-block conflicts. This copies the histogram values
+ * relevant for each thread into local registers to provide fast access.
+ *
+ * TODO: Reimplementing shared memory with proper reductions to avoid atomic
+ * accesses might work faster in the end than using the local registers + atomic.
  *
  * Note: All arrays must be device-allocated
  *
@@ -206,9 +209,6 @@ __global__ void ConditionalEntropyKernel(const float *__restrict__ hists,
 										 const ConditionalEntropy h_params,
 										 float *__restrict__ ce_vals)
 {
-	// Shared memory scratch space
-	extern __shared__ float shared_hists[];
-
 	// Which histogram row this thread is summing
 	size_t idx = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -218,16 +218,13 @@ __global__ void ConditionalEntropyKernel(const float *__restrict__ hists,
 		return;
 	}
 
-	// Which shared memory location this thread uses
-	size_t tid = threadIdx.x;
-
 	// Index in the histogram array corresponding to the start of this row
 	const size_t offset = idx * h_params.NumMagBins();
 
 	// This works if NumMagBins is fairly small.
-	float local_sum = 0.0f;
+	float  local_sum    = 0.0f;
 	size_t num_mag_bins = h_params.NumMagBins();
-	float local_hists[128];
+	float  local_hists[128]; // assumes no more than 128 bins. Can't declare with num_mag_bins because c++ enforces known array sizes.
 	for(size_t i = 0; i < num_mag_bins; i++)
 	{
 		local_hists[i] = hists[i + offset];
@@ -236,7 +233,7 @@ __global__ void ConditionalEntropyKernel(const float *__restrict__ hists,
 
 	// Compute per-phase-bin conditional entropy
 	// TODO: remove use of global mem?
-	float p_j    = local_sum; // Store p_j
+	float p_j = local_sum; // Store p_j
 	local_sum = 0.0f;
 	for(size_t i = 0; i < num_mag_bins; i++)
 	{
@@ -445,9 +442,8 @@ void ConditionalEntropy::CalcCEValsBatched(const std::vector<float *> &times,
 	const dim3   grid_dim_fb     = dim3(num_periods, num_p_dts);
 
 	// Kernel launch information for the ce calculation step
-	const size_t num_threads_ce  = 256;
-	const size_t num_blocks_ce   = ((num_hists * NumPhaseBins()) / num_threads_ce) + 1;
-	const size_t shared_bytes_ce = num_threads_ce * sizeof(float);
+	const size_t num_threads_ce = 256;
+	const size_t num_blocks_ce  = ((num_hists * NumPhaseBins()) / num_threads_ce) + 1;
 
 	// Buffer size (large enough for longest light curve)
 	auto         max_length    = std::max_element(lengths.begin(), lengths.end());
@@ -507,7 +503,7 @@ void ConditionalEntropy::CalcCEValsBatched(const std::vector<float *> &times,
 				dev_times_buffer, dev_mags_buffer, lengths[stream_batch_idx], dev_periods,
 				dev_period_dts, *this, dev_hists);
 
-			ConditionalEntropyKernel<<<num_blocks_ce, num_threads_ce, shared_bytes_ce, streams[stream_idx]>>>(
+			ConditionalEntropyKernel<<<num_blocks_ce, num_threads_ce, 0, streams[stream_idx]>>>(
 				dev_hists, num_hists, *this, dev_ces);
 
 			gpuErrchk(cudaMemcpyAsync(&ce_out[stream_batch_idx * num_hists], dev_ces, ce_out_size, cudaMemcpyDeviceToHost, streams[stream_idx]));
