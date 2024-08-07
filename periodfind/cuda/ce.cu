@@ -224,20 +224,23 @@ __global__ void ConditionalEntropyKernel(const float *__restrict__ hists,
 	// Index in the histogram array corresponding to the start of this row
 	const size_t offset = idx * h_params.NumMagBins();
 
-
+	// This works if NumMagBins is fairly small.
 	float local_sum = 0.0f;
-	for(size_t i = 0; i < h_params.NumMagBins(); i++)
+	size_t num_mag_bins = h_params.NumMagBins();
+	float local_hists[128];
+	for(size_t i = 0; i < num_mag_bins; i++)
 	{
-		local_sum += hists[i + offset];
+		local_hists[i] = hists[i + offset];
+		local_sum += local_hists[i];
 	}
 
 	// Compute per-phase-bin conditional entropy
 	// TODO: remove use of global mem?
 	float p_j    = local_sum; // Store p_j
 	local_sum = 0.0f;
-	for(size_t i = 0; i < h_params.NumMagBins(); i++)
+	for(size_t i = 0; i < num_mag_bins; i++)
 	{
-		float p_ij = hists[i + offset];
+		float p_ij = local_hists[i];
 		if(p_ij != 0)
 		{
 			local_sum += p_ij * logf(p_j / p_ij);
