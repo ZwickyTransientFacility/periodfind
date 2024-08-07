@@ -163,8 +163,7 @@ __global__ void FoldBinKernel(const float *__restrict__ times,
 		{
 			for(size_t j = 0; j < h_params.NumMagBinOverlap(); j++)
 			{
-				size_t idx =
-					h_params.BinIndex((phase_bin + i) % h_params.NumPhaseBins(), (mag_bin + j) % h_params.NumMagBins());
+				size_t idx = h_params.BinIndex((phase_bin + i) % h_params.NumPhaseBins(), (mag_bin + j) % h_params.NumMagBins());
 				atomicAdd(&sh_hist[idx], 1);
 			}
 		}
