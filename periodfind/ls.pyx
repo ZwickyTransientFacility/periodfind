@@ -137,14 +137,9 @@ cdef class LombScargle:
 
         mags_use = []
         if center:
-            for mag in mags:
-                mags_use.append(mag - np.mean(mag))
+            mags_use = [mag -np.mean(mag) for mag in mags]
         elif normalize:
-            for mag in mags:
-                min_v = np.min(mag)
-                max_v = np.max(mag)
-                scaled = ((mag - min_v) / (max_v - min_v)) * 0.999 + 5e-4
-                mags_use.append(scaled)
+            mags_use = [((mag - np.min(mag)) / (np.max(mag) - np.min(mag))) * 0.999 + 5e-4 for mag in mags]
         else:
             mags_use = mags
 
