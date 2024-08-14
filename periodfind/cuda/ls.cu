@@ -257,7 +257,7 @@ void LombScargle::CalcLSBatched(const std::vector<float *> &times,
 	gpuErrchk(cudaMalloc(&dev_per, per_out_size));
 
 	const size_t total_threads_x = num_periods * num_batched_curves;
-	const size_t x_threads = 512;
+	const size_t x_threads = 256;
 	const size_t y_threads = 1;
 	const size_t x_blocks  = (total_threads_x + x_threads - 1) / x_threads;
 	const size_t y_blocks  = (num_p_dts + y_threads - 1) / y_threads;
