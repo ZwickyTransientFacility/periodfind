@@ -241,7 +241,7 @@ void LombScargle::CalcLSBatched(const std::vector<float *> &times,
 								const size_t num_p_dts,
 								float *__restrict__ per_out) const
 {
-	const size_t num_batched_curves     = 8;
+	const size_t num_batched_curves     = 256;
 	size_t       per_points     = num_periods * num_p_dts;
 	size_t       per_out_size   = num_batched_curves * per_points * sizeof(float);
 	size_t       per_size_total = per_points * sizeof(float) * lengths.size();
@@ -287,6 +287,7 @@ void LombScargle::CalcLSBatched(const std::vector<float *> &times,
 	gpuErrchk(cudaHostAlloc((void **) &host_mags_contiguous, total_elements * sizeof(float), cudaHostAllocDefault));
 
 	size_t contiguous_offset = 0;
+
 
 	for(size_t i = 0; i < lengths.size(); i++)
 	{
