@@ -166,7 +166,7 @@ cdef class LombScargle:
         n_per = len(periods)
         n_pdt = len(period_dts)
 
-        ls_ndarr = np.zeros([time_length n_per, n_pdt], dtype=np.float32)
+        ls_ndarr = np.zeros([time_length, n_per, n_pdt], dtype=np.float32)
         cdef float[:, :, ::1] ls_view = ls_ndarr
 
         self.ls.CalcLSBatched(

@@ -3559,7 +3559,7 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
  *         cdef vector[float*] times_ptrs
  *         cdef vector[size_t] times_lens
  *         times_ptrs.reserve(time_length)             # <<<<<<<<<<<<<<
- *         times_ptrs.reserve(time_length)
+ *         times_lens.reserve(time_length)
  * 
  */
   __pyx_v_times_ptrs.reserve(__pyx_v_time_length);
@@ -3567,14 +3567,14 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
   /* "periodfind/ls.pyx":130
  *         cdef vector[size_t] times_lens
  *         times_ptrs.reserve(time_length)
- *         times_ptrs.reserve(time_length)             # <<<<<<<<<<<<<<
+ *         times_lens.reserve(time_length)             # <<<<<<<<<<<<<<
  * 
  *         for time_obj in times:
  */
-  __pyx_v_times_ptrs.reserve(__pyx_v_time_length);
+  __pyx_cur_scope->__pyx_v_times_lens.reserve(__pyx_v_time_length);
 
   /* "periodfind/ls.pyx":132
- *         times_ptrs.reserve(time_length)
+ *         times_lens.reserve(time_length)
  * 
  *         for time_obj in times:             # <<<<<<<<<<<<<<
  *             time_arr = time_obj
@@ -3666,7 +3666,7 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
     }
 
     /* "periodfind/ls.pyx":132
- *         times_ptrs.reserve(time_length)
+ *         times_lens.reserve(time_length)
  * 
  *         for time_obj in times:             # <<<<<<<<<<<<<<
  *             time_arr = time_obj
@@ -4188,7 +4188,7 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
  *         n_per = len(periods)
  *         n_pdt = len(period_dts)             # <<<<<<<<<<<<<<
  * 
- *         ls_ndarr = np.zeros([len(times), n_per, n_pdt], dtype=np.float32)
+ *         ls_ndarr = np.zeros([time_length, n_per, n_pdt], dtype=np.float32)
  */
   __pyx_t_1 = PyObject_Length(((PyObject *)__pyx_v_period_dts)); if (unlikely(__pyx_t_1 == ((Py_ssize_t)-1))) __PYX_ERR(0, 167, __pyx_L1_error)
   __pyx_v_n_pdt = __pyx_t_1;
@@ -4196,7 +4196,7 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
   /* "periodfind/ls.pyx":169
  *         n_pdt = len(period_dts)
  * 
- *         ls_ndarr = np.zeros([len(times), n_per, n_pdt], dtype=np.float32)             # <<<<<<<<<<<<<<
+ *         ls_ndarr = np.zeros([time_length, n_per, n_pdt], dtype=np.float32)             # <<<<<<<<<<<<<<
  *         cdef float[:, :, ::1] ls_view = ls_ndarr
  * 
  */
@@ -4205,12 +4205,7 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
   __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_zeros); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 169, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (unlikely(__pyx_v_times == Py_None)) {
-    PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
-    __PYX_ERR(0, 169, __pyx_L1_error)
-  }
-  __pyx_t_1 = PyList_GET_SIZE(__pyx_v_times); if (unlikely(__pyx_t_1 == ((Py_ssize_t)-1))) __PYX_ERR(0, 169, __pyx_L1_error)
-  __pyx_t_4 = PyInt_FromSsize_t(__pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 169, __pyx_L1_error)
+  __pyx_t_4 = PyInt_FromSsize_t(__pyx_v_time_length); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 169, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __pyx_t_15 = PyInt_FromSsize_t(__pyx_v_n_per); if (unlikely(!__pyx_t_15)) __PYX_ERR(0, 169, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_15);
@@ -4251,7 +4246,7 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
 
   /* "periodfind/ls.pyx":170
  * 
- *         ls_ndarr = np.zeros([len(times), n_per, n_pdt], dtype=np.float32)
+ *         ls_ndarr = np.zeros([time_length, n_per, n_pdt], dtype=np.float32)
  *         cdef float[:, :, ::1] ls_view = ls_ndarr             # <<<<<<<<<<<<<<
  * 
  *         self.ls.CalcLSBatched(
@@ -4351,15 +4346,11 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
       /* "periodfind/ls.pyx":187
  *                         significance_type=significance_type,
  *                     )
- *                     for i in range(len(times))             # <<<<<<<<<<<<<<
+ *                     for i in range(time_length)             # <<<<<<<<<<<<<<
  *                 ]
  *         elif output == 'periodogram':
  */
-      if (unlikely(__pyx_v_times == Py_None)) {
-        PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
-        __PYX_ERR(0, 187, __pyx_L1_error)
-      }
-      __pyx_t_1 = PyList_GET_SIZE(__pyx_v_times); if (unlikely(__pyx_t_1 == ((Py_ssize_t)-1))) __PYX_ERR(0, 187, __pyx_L1_error)
+      __pyx_t_1 = __pyx_v_time_length;
       __pyx_t_13 = __pyx_t_1;
       for (__pyx_t_22 = 0; __pyx_t_22 < __pyx_t_13; __pyx_t_22+=1) {
         __pyx_8genexpr3__pyx_v_i = __pyx_t_22;
@@ -4438,7 +4429,7 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
  *                         n=n_stats,
  *                         significance_type=significance_type,             # <<<<<<<<<<<<<<
  *                     )
- *                     for i in range(len(times))
+ *                     for i in range(time_length)
  */
         if (PyDict_SetItem(__pyx_t_7, __pyx_n_s_significance_type, __pyx_v_significance_type) < 0) __PYX_ERR(0, 184, __pyx_L1_error)
 
@@ -4472,7 +4463,7 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
   }
 
   /* "periodfind/ls.pyx":189
- *                     for i in range(len(times))
+ *                     for i in range(time_length)
  *                 ]
  *         elif output == 'periodogram':             # <<<<<<<<<<<<<<
  *             return [Periodogram(data, [periods, period_dts], True)
@@ -4633,7 +4624,7 @@ static PyObject *__pyx_pf_10periodfind_2ls_11LombScargle_2calc(struct __pyx_obj_
     goto __pyx_L0;
 
     /* "periodfind/ls.pyx":189
- *                     for i in range(len(times))
+ *                     for i in range(time_length)
  *                 ]
  *         elif output == 'periodogram':             # <<<<<<<<<<<<<<
  *             return [Periodogram(data, [periods, period_dts], True)

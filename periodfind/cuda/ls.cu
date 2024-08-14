@@ -296,7 +296,7 @@ void LombScargle::CalcLSBatched(const std::vector<float *> &times,
 		contiguous_offset += lengths[i];
 	}
 
-	const size_t num_streams = 3;
+	const size_t num_streams = 4;
 	cudaStream_t streams[num_streams];
 	for(size_t i = 0; i < num_streams; i++)
 	{
