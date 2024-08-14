@@ -127,7 +127,7 @@ cdef class LombScargle:
         cdef vector[float*] times_ptrs
         cdef vector[size_t] times_lens
         times_ptrs.reserve(time_length)
-        times_ptrs.reserve(time_length)
+        times_lens.reserve(time_length)
         
         for time_obj in times:
             time_arr = time_obj
@@ -166,7 +166,7 @@ cdef class LombScargle:
         n_per = len(periods)
         n_pdt = len(period_dts)
 
-        ls_ndarr = np.zeros([len(times), n_per, n_pdt], dtype=np.float32)
+        ls_ndarr = np.zeros([time_length n_per, n_pdt], dtype=np.float32)
         cdef float[:, :, ::1] ls_view = ls_ndarr
 
         self.ls.CalcLSBatched(
@@ -184,7 +184,7 @@ cdef class LombScargle:
                         n=n_stats,
                         significance_type=significance_type,
                     )
-                    for i in range(len(times))
+                    for i in range(time_length)
                 ]
         elif output == 'periodogram':
             return [Periodogram(data, [periods, period_dts], True)
