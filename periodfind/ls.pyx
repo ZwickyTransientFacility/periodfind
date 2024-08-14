@@ -126,8 +126,8 @@ cdef class LombScargle:
         cdef np.ndarray[ndim=1, dtype=np.float32_t] time_arr
         cdef vector[float*] times_ptrs
         cdef vector[size_t] times_lens
-        time_ptrs.reserve(time_length)
-        time_ptrs.reserve(time_length)
+        times_ptrs.reserve(time_length)
+        times_ptrs.reserve(time_length)
         
         for time_obj in times:
             time_arr = time_obj
