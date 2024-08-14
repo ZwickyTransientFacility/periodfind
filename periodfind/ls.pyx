@@ -119,12 +119,16 @@ cdef class LombScargle:
         """
         
         # Make sure the number of times and mags matches 
-        if len(times) != len(mags):
+        time_length = len(times)
+        if time_length != len(mags):
             return np.zeros([0, 0, 0], dtype=np.float32)
         
         cdef np.ndarray[ndim=1, dtype=np.float32_t] time_arr
         cdef vector[float*] times_ptrs
         cdef vector[size_t] times_lens
+        time_ptrs.reserve(time_length)
+        time_ptrs.reserve(time_length)
+        
         for time_obj in times:
             time_arr = time_obj
             times_ptrs.push_back(&time_arr[0])
@@ -137,15 +141,19 @@ cdef class LombScargle:
 
         mags_use = []
         if center:
-            mags_use = [mag -np.mean(mag) for mag in mags]
+            mags_use = [mag - np.mean(mag) for mag in mags]
         elif normalize:
             mags_use = [((mag - np.min(mag)) / (np.max(mag) - np.min(mag))) * 0.999 + 5e-4 for mag in mags]
         else:
             mags_use = mags
 
+        mags_length = len(mags_use)
         cdef np.ndarray[ndim=1, dtype=np.float32_t] mag_arr
         cdef vector[float*] mags_ptrs
         cdef vector[size_t] mags_lens
+        mags_ptrs.reserve(mags_length)
+        mags_lens.reserve(mags_length)
+
         for mag_obj in mags_use:
             mag_arr = mag_obj
             mags_ptrs.push_back(&mag_arr[0])
