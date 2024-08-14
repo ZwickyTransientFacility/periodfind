@@ -168,19 +168,16 @@ cdef class LombScargle:
         )
         
         if output == 'stats':
-            all_stats = []
-            for i in range(len(times)):
-                stats = Statistics.statistics_from_data(
-                    ls_ndarr[i],
-                    [periods, period_dts],
-                    True,
-                    n=n_stats,
-                    significance_type=significance_type,
-                )
-
-                all_stats.append(stats)
-            
-            return all_stats
+            return [
+                    Statistics.statistics_from_data(
+                        ls_ndarr[i],
+                        [periods, period_dts],
+                        True,
+                        n=n_stats,
+                        significance_type=significance_type,
+                    )
+                    for i in range(len(times))
+                ]
         elif output == 'periodogram':
             return [Periodogram(data, [periods, period_dts], True)
                     for data in ls_ndarr]
