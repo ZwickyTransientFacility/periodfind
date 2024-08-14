@@ -4,6 +4,8 @@ include(GNUInstallDirs)
 
 project(periodfind LANGUAGES CXX CUDA)
 
+find_package(OpenMP REQUIRED)
+
 add_library(periodfind SHARED
             periodfind/cuda/ce.cu
             periodfind/cuda/aov.cu
@@ -18,7 +20,15 @@ set_target_properties(periodfind
 
 set_target_properties(periodfind PROPERTIES PUBLIC_HEADER "${HEADER_FILES}")
 
+target_link_libraries(periodfind PRIVATE OpenMP::OpenMP_CXX)
+target_compile_options(periodfind PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=-fopenmp>)
 target_compile_options(periodfind PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-use_fast_math>)
+
+if(OpenMP_CXX_FOUND)
+	message(STATUS "OpenMP FOUND")
+else()
+	message(STATUS "OpenMP NOT FOUND WTF")
+endif()
 
 install(TARGETS periodfind
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
