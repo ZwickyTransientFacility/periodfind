@@ -436,12 +436,12 @@ void ConditionalEntropy::CalcCEValsBatched(const std::vector<float *> &times,
 	gpuErrchk(cudaMalloc(&dev_ces, ce_out_size));
 
 	// Kernel launch information for the fold & bin step
-	const size_t num_threads_fb  = 128;
+	const size_t num_threads_fb  = 64;
 	const size_t shared_bytes_fb = NumBins() * sizeof(uint32_t);
 	const dim3   grid_dim_fb     = dim3(num_periods, num_p_dts);
 
 	// Kernel launch information for the ce calculation step
-	const size_t num_threads_ce = 128;
+	const size_t num_threads_ce = 64;
 	const size_t num_blocks_ce  = ((num_hists * NumPhaseBins()) / num_threads_ce) + 1;
 
 	// Buffer size (large enough for longest light curve)
