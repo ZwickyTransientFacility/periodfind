@@ -415,7 +415,8 @@ void ConditionalEntropy::CalcCEValsBatched(const std::vector<float*>& times,
     gpuErrchk(cudaMalloc(&dev_ces, ce_out_size));
 
     // Kernel launch information for the fold & bin step
-    const size_t num_threads_fb = 256;
+    const size_t max_blocks = 2560 >> 1; // divide by 2 to get 50% of the max blocks that are running... since the kernels are async.
+    const size_t num_threads_fb = 64;
     const size_t shared_bytes_fb = NumBins() * sizeof(uint32_t);
     const dim3 grid_dim_fb = dim3(num_periods, num_p_dts);
 
@@ -424,6 +425,10 @@ void ConditionalEntropy::CalcCEValsBatched(const std::vector<float*>& times,
     const size_t num_blocks_ce =
         ((num_hists * NumPhaseBins()) / num_threads_ce) + 1;
     const size_t shared_bytes_ce = num_threads_ce * sizeof(float);
+
+    printf("shared_bytes_ce: %lu\n");
+    printf("grid_dim_fb: %lu %lu\n", grid_dim_fb.x, grid_dim_fb.y);
+    printf("num_threads_ce, num_blocks_ce: %lu %lu\n", num_threads_ce, num_blocks_ce);
 
     // Buffer size (large enough for longest light curve)
     auto max_length = std::max_element(lengths.begin(), lengths.end());
@@ -434,33 +439,69 @@ void ConditionalEntropy::CalcCEValsBatched(const std::vector<float*>& times,
     float* dev_mags_buffer;
     gpuErrchk(cudaMalloc(&dev_times_buffer, buffer_bytes));
     gpuErrchk(cudaMalloc(&dev_mags_buffer, buffer_bytes));
+	size_t total_elements = 0;
+	for(size_t i = 0; i < lengths.size(); i++)
+	{
+		total_elements += lengths[i];
+	}
 
-    for (size_t i = 0; i < lengths.size(); i++) {
-        // Copy light curve into device buffer
-        const size_t curve_bytes = lengths[i] * sizeof(float);
-        gpuErrchk(cudaMemcpy(dev_times_buffer, times[i], curve_bytes,
-                             cudaMemcpyHostToDevice));
-        gpuErrchk(cudaMemcpy(dev_mags_buffer, mags[i], curve_bytes,
-                             cudaMemcpyHostToDevice));
+	size_t contiguous_offset = 0;
+	float *__restrict__ host_times_contiguous;
+	float *__restrict__ host_mags_contiguous;
+	gpuErrchk(cudaHostAlloc((void **) &host_times_contiguous, total_elements * sizeof(float), cudaHostAllocDefault));
+	gpuErrchk(cudaHostAlloc((void **) &host_mags_contiguous, total_elements * sizeof(float), cudaHostAllocDefault));
 
-        // Zero conditional entropy output
-        gpuErrchk(cudaMemset(dev_ces, 0, ce_out_size));
+	for(size_t i = 0; i < lengths.size(); i++)
+	{
+		memcpy(host_times_contiguous + contiguous_offset, times[i], lengths[i] * sizeof(float));
+		memcpy(host_mags_contiguous + contiguous_offset, mags[i], lengths[i] * sizeof(float));
+		contiguous_offset += lengths[i];
+	}
 
-        // NOTE: A ConditionalEntropy object is small enough that we can pass it
-        //       in the registers by dereferencing it.
-
-        FoldBinKernel<<<grid_dim_fb, num_threads_fb, shared_bytes_fb>>>(
-            dev_times_buffer, dev_mags_buffer, lengths[i], dev_periods,
-            dev_period_dts, *this, dev_hists);
-
-        ConditionalEntropyKernel<<<num_blocks_ce, num_threads_ce,
-                                   shared_bytes_ce>>>(dev_hists, num_hists,
-                                                      *this, dev_ces);
-
-        // Copy CE data back to host
-        gpuErrchk(cudaMemcpy(&ce_out[i * num_hists], dev_ces, ce_out_size,
-                             cudaMemcpyDeviceToHost));
+    const size_t num_streams = 3;
+    cudaStream_t streams[num_streams];
+    for(size_t i = 0; i < num_streams; i++)
+    {
+	    gpuErrchk(cudaStreamCreate(&streams[i]));
     }
+
+	size_t curve_offset = 0;
+	for(size_t batch_idx = 0; batch_idx < lengths.size(); batch_idx += num_streams)
+	{
+		for(size_t stream_idx = 0; stream_idx < num_streams; stream_idx++)
+		{
+			const size_t stream_batch_idx = batch_idx + stream_idx;
+
+			if(stream_batch_idx >= lengths.size())
+			{
+				break;
+			}
+
+			const size_t curve_bytes = lengths[stream_batch_idx] * sizeof(float);
+			gpuErrchk(cudaMemcpyAsync(dev_times_buffer, host_times_contiguous + curve_offset, curve_bytes, cudaMemcpyHostToDevice, streams[stream_idx]));
+			gpuErrchk(cudaMemcpyAsync(dev_mags_buffer, host_mags_contiguous + curve_offset, curve_bytes, cudaMemcpyHostToDevice, streams[stream_idx]));
+
+			gpuErrchk(cudaMemsetAsync(dev_ces, 0, ce_out_size, streams[stream_idx]));
+
+			FoldBinKernel<<<grid_dim_fb, num_threads_fb, shared_bytes_fb, streams[stream_idx]>>>(
+				dev_times_buffer, dev_mags_buffer, lengths[stream_batch_idx], dev_periods,
+				dev_period_dts, *this, dev_hists);
+
+			ConditionalEntropyKernel<<<num_blocks_ce, num_threads_ce, shared_bytes_ce, streams[stream_idx]>>>(
+				dev_hists, num_hists, *this, dev_ces);
+
+			gpuErrchk(cudaMemcpyAsync(&ce_out[stream_batch_idx * num_hists], dev_ces, ce_out_size, cudaMemcpyDeviceToHost, streams[stream_idx]));
+
+			curve_offset += curve_bytes / sizeof(float);
+		}
+	}
+
+
+	for(size_t i = 0; i < num_streams; ++i)
+	{
+		gpuErrchk(cudaStreamSynchronize(streams[i]));
+		gpuErrchk(cudaStreamDestroy(streams[i]));
+	}
 
     // Free all of the GPU memory
     gpuErrchk(cudaFree(dev_periods));
@@ -469,6 +510,8 @@ void ConditionalEntropy::CalcCEValsBatched(const std::vector<float*>& times,
     gpuErrchk(cudaFree(dev_ces));
     gpuErrchk(cudaFree(dev_times_buffer));
     gpuErrchk(cudaFree(dev_mags_buffer));
+    	cudaFreeHost(host_times_contiguous);
+	cudaFreeHost(host_mags_contiguous);
 }
 
 float* ConditionalEntropy::CalcCEValsBatched(const std::vector<float*>& times,
