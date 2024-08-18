@@ -333,12 +333,12 @@ void AOV::CalcAOVValsBatched(const std::vector<float*>& times,
     gpuErrchk(cudaMalloc(&dev_aovs, aov_out_size));
 
     // Kernel launch information for the fold & bin step
-    const size_t num_threads_fb = 256;
+    const size_t num_threads_fb = 64;
     const size_t shared_bytes_fb = NumPhaseBins() * sizeof(AOVData);
     const dim3 grid_dim_fb = dim3(num_periods, num_p_dts);
 
     // Kernel launch information for the ce calculation step
-    const size_t num_threads_aov = 256;
+    const size_t num_threads_aov = 64;
     const size_t num_blocks_aov = (num_hists / num_threads_aov) + 1;
     const size_t shared_bytes_aov = num_threads_aov * sizeof(float);
 
@@ -363,20 +363,24 @@ void AOV::CalcAOVValsBatched(const std::vector<float*>& times,
     size_t contiguous_offset = 0;
     float *__restrict__ host_times_contiguous;
     float *__restrict__ host_mags_contiguous;
+    float *__restrict__ mean_mags = new float[lengths.size()];
     gpuErrchk(cudaHostAlloc((void**) &host_times_contiguous, total_elements * sizeof(float), cudaHostAllocDefault));
     gpuErrchk(cudaHostAlloc((void**) &host_mags_contiguous, total_elements * sizeof(float), cudaHostAllocDefault));
 
     for(size_t i = 0; i < lengths.size(); i++)
     {
+	    mean_mags[i] = ArrayMean(mags[i], lengths[i]);
 	    memcpy(host_times_contiguous + contiguous_offset, times[i], lengths[i] * sizeof(float));
 	    memcpy(host_mags_contiguous + contiguous_offset, mags[i], lengths[i] * sizeof(float));
+
 	    contiguous_offset += lengths[i];
     }
 
 
+
+
     size_t curve_offset = 0;
     for (size_t i = 0; i < lengths.size(); i++) {
-        float mean_mag = ArrayMean(mags[i], lengths[i]);
 
         // Copy light curve into device buffer
         const size_t curve_bytes = lengths[i] * sizeof(float);
@@ -396,7 +400,7 @@ void AOV::CalcAOVValsBatched(const std::vector<float*>& times,
             dev_period_dts, *this, dev_hists);
 
         AOVKernel<<<num_blocks_aov, num_threads_aov, shared_bytes_aov>>>(
-            dev_hists, num_hists, lengths[i], mean_mag, *this, dev_aovs);
+            dev_hists, num_hists, lengths[i], mean_mags[i], *this, dev_aovs);
 
         // Copy AOV data back to host
         cudaMemcpy(&aov_out[i * num_hists], dev_aovs, aov_out_size,
