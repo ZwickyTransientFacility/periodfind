@@ -51,6 +51,7 @@ __global__ void FoldBinKernel(const float *__restrict__ times,
     uint32_t* sh_count = &shared_bytes[0];
     float *__restrict__ sh_sums = (float*)&shared_bytes[aov.NumPhaseBins()];
     float *__restrict sh_sq_sums = (float*)&shared_bytes[2 * aov.NumPhaseBins()];
+    size_t num_phase_bin_overlap = aov.NumPhaseBinOverlap();
 
     for (size_t idx = threadIdx.x; idx < aov.NumPhaseBins();
          idx += blockDim.x) {
@@ -72,27 +73,15 @@ __global__ void FoldBinKernel(const float *__restrict__ times,
 
     // Compute the histogram statistics.
     for (size_t idx = threadIdx.x; idx < length; idx += blockDim.x) {
-        size_t perthread_count = 0;
-	float perthread_sum = 0.0f;
-	float perthread_sq_sum = 0.0f;
-	    
 	float t = times[idx];
         float t_corr = t - pdt_corr * t * t;
         float folded = fabsf(modff(t_corr / period, &i_part));
-
         float mag = mags[idx];
-
         size_t bin = aov.PhaseBin(folded);
 
-        for (size_t i = 0; i < aov.NumPhaseBinOverlap(); i++) {
-	    perthread_count++;
-	    perthread_sum += mag;
-	    perthread_sq_sum += mag * mag;
-        }
-
-	atomicAdd(&sh_count[bin], perthread_count);
-	atomicAdd(&sh_sums[bin], perthread_sum);
-	atomicAdd(&sh_sq_sums[bin], perthread_sq_sum);
+	atomicAdd(&sh_count[bin], num_phase_bin_overlap);
+	atomicAdd(&sh_sums[bin], num_phase_bin_overlap * mag);
+	atomicAdd(&sh_sq_sums[bin], num_phase_bin_overlap * mag * mag);
     }
 
     __syncthreads();
