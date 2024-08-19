@@ -72,7 +72,11 @@ __global__ void FoldBinKernel(const float *__restrict__ times,
 
     // Compute the histogram statistics.
     for (size_t idx = threadIdx.x; idx < length; idx += blockDim.x) {
-        float t = times[idx];
+        size_t perthread_count = 0;
+	float perthread_sum = 0.0f;
+	float perthread_sq_sum = 0.0f;
+	    
+	float t = times[idx];
         float t_corr = t - pdt_corr * t * t;
         float folded = fabsf(modff(t_corr / period, &i_part));
 
@@ -81,12 +85,14 @@ __global__ void FoldBinKernel(const float *__restrict__ times,
         size_t bin = aov.PhaseBin(folded);
 
         for (size_t i = 0; i < aov.NumPhaseBinOverlap(); i++) {
-            size_t idx = (bin + i) % aov.NumPhaseBins();
-
-            atomicAdd(&sh_count[bin], 1);
-            atomicAdd(&sh_sums[bin], mag);
-            atomicAdd(&sh_sq_sums[bin], mag * mag);
+	    perthread_count++;
+	    perthread_sum += mag;
+	    perthread_sq_sum += mag * mag;
         }
+
+	atomicAdd(&sh_count[bin], perthread_count);
+	atomicAdd(&sh_sums[bin], perthread_sum);
+	atomicAdd(&sh_sq_sums[bin], perthread_sq_sum);
     }
 
     __syncthreads();
