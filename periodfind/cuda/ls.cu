@@ -241,10 +241,10 @@ void LombScargle::CalcLSBatched(const std::vector<float *> &times,
 								const size_t num_p_dts,
 								float *__restrict__ per_out) const
 {
-	const size_t num_batched_curves     = 256;
-	size_t       per_points     = num_periods * num_p_dts;
-	size_t       per_out_size   = num_batched_curves * per_points * sizeof(float);
-	size_t       per_size_total = per_points * sizeof(float) * lengths.size();
+	const size_t num_batched_curves = 256;
+	size_t       per_points         = num_periods * num_p_dts;
+	size_t       per_out_size       = num_batched_curves * per_points * sizeof(float);
+	size_t       per_size_total     = per_points * sizeof(float) * lengths.size();
 
 	float *dev_periods;
 	float *dev_period_dts;
@@ -257,12 +257,12 @@ void LombScargle::CalcLSBatched(const std::vector<float *> &times,
 	gpuErrchk(cudaMalloc(&dev_per, per_out_size));
 
 	const size_t total_threads_x = num_periods * num_batched_curves;
-	const size_t x_threads = 256;
-	const size_t y_threads = 1;
-	const size_t x_blocks  = (total_threads_x + x_threads - 1) / x_threads;
-	const size_t y_blocks  = (num_p_dts + y_threads - 1) / y_threads;
-	const dim3   block_dim = dim3(x_threads, y_threads);
-	const dim3   grid_dim  = dim3(x_blocks, y_blocks);
+	const size_t x_threads       = 256;
+	const size_t y_threads       = 1;
+	const size_t x_blocks        = (total_threads_x + x_threads - 1) / x_threads;
+	const size_t y_blocks        = (num_p_dts + y_threads - 1) / y_threads;
+	const dim3   block_dim       = dim3(x_threads, y_threads);
+	const dim3   grid_dim        = dim3(x_blocks, y_blocks);
 
 	auto         max_length    = std::max_element(lengths.begin(), lengths.end());
 	const size_t buffer_length = *max_length;
@@ -316,7 +316,7 @@ void LombScargle::CalcLSBatched(const std::vector<float *> &times,
 				break;
 			}
 
-			size_t curve_bytes           = 0;
+			size_t       curve_bytes           = 0;
 			const size_t num_curves_to_process = stream_batch_idx + num_batched_curves < lengths.size() ? num_batched_curves : lengths.size() - stream_batch_idx;
 			const size_t actual_per_out_size   = num_curves_to_process * per_points * sizeof(float);
 
@@ -379,8 +379,7 @@ float *LombScargle::CalcLSBatched(const std::vector<float *> &times,
 	// Allocate the output CE array so we can copy to it.
 	float *per_out = (float *) malloc(per_size_total);
 
-	CalcLSBatched(times, mags, lengths, periods, period_dts, num_periods,
-				  num_p_dts, per_out);
+	CalcLSBatched(times, mags, lengths, periods, period_dts, num_periods, num_p_dts, per_out);
 
 	return per_out;
 }
