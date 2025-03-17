@@ -67,7 +67,7 @@ class AOV {
      * @return amount of phase bin overlap in histogram
      */
     __host__ __device__ size_t NumPhaseBinOverlap() const;
-    
+
     /**
      * Gives the first phase bin for a given phase value.
      *
