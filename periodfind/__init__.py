@@ -241,10 +241,15 @@ class Periodogram:
         self.data = periodogram
         self.params = params
 
+    def _calc_mean(self):
         self.mean = np.mean(self.data)
+    def _calc_std(self):
         self.std = np.std(self.data)
+    def _calc_median(self):
         self.median = np.median(self.data)
+    def _calc_mad(self):
         self.mad = np.median(np.abs(self.data - self.median))
+
 
     def best_params(self, n=1, significance_type='stdmean'):
         """Returns the best parameters of the periodogram.
@@ -266,6 +271,11 @@ class Periodogram:
         stats : `Statistics` or list of `Statistics`
             Statistics for the top `n` parameters
         """
+        self._calc_mean()
+        self._calc_std()
+        self._calc_median()
+        self._calc_mad()
+        
         return Statistics.statistics_from_data(
             self.data,
             self.params,
