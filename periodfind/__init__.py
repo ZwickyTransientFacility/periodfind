@@ -240,6 +240,10 @@ class Periodogram:
         self.use_max = use_max
         self.data = periodogram
         self.params = params
+        self.mean = None
+        self.std = None
+        self.median = None
+        self.mad = None
 
     def _calc_mean(self):
         self.mean = np.mean(self.data)
