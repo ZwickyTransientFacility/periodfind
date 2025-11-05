@@ -45,12 +45,12 @@ __global__ void FoldBinKernel(const float* __restrict__ times,
                               const float* __restrict__ mags,
                               const size_t length,
                               const float* __restrict__ periods,
-                              const float* __restrict period_dts,
+                              const float* __restrict__ period_dts,
                               const AOV aov,
                               AOVData* data) {
     uint32_t* sh_count = &shared_bytes[0];
     float* __restrict__ sh_sums = (float*)&shared_bytes[aov.NumPhaseBins()];
-    float* __restrict sh_sq_sums =
+    float* __restrict__ sh_sq_sums =
         (float*)&shared_bytes[2 * aov.NumPhaseBins()];
     size_t num_phase_bin_overlap = aov.NumPhaseBinOverlap();
 
