@@ -131,7 +131,8 @@ cdef class AOV:
         """
 
         # Make sure the number of times and mags matches 
-        if len(times) != len(mags):
+        time_length = len(times)
+        if time_length != len(mags):
             return np.zeros([0, 0, 0], dtype=np.float32)
         
         cdef np.ndarray[ndim=1, dtype=np.float32_t] time_arr
@@ -149,20 +150,20 @@ cdef class AOV:
 
         mags_use = []
         if center:
-            for mag in mags:
-                mags_use.append(mag - np.mean(mag))
+            mags_use = [mag - np.mean(mag) for mag in mags]
         elif normalize:
-            for mag in mags:
-                min_v = np.min(mag)
-                max_v = np.max(mag)
-                scaled = ((mag - min_v) / (max_v - min_v)) * 0.999 + 5e-4
-                mags_use.append(scaled)
+            mags_use = [((mag - np.min(mag)) / (np.max(mag) - np.min(mag))) * 0.999 + 5e-4 for mag in mags]
         else:
             mags_use = mags
+
+        mags_length = len(mags_use)
 
         cdef np.ndarray[ndim=1, dtype=np.float32_t] mag_arr
         cdef vector[float*] mags_ptrs
         cdef vector[size_t] mags_lens
+        mags_ptrs.reserve(mags_length)
+        mags_lens.reserve(mags_length)
+
         for mag_obj in mags_use:
             mag_arr = mag_obj
             mags_ptrs.push_back(&mag_arr[0])
@@ -185,19 +186,17 @@ cdef class AOV:
         )
         
         if output == 'stats':
-            all_stats = []
-            for i in range(len(times)):
-                stats = Statistics.statistics_from_data(
-                    aovs_ndarr[i],
-                    [periods, period_dts],
-                    True,
-                    n=n_stats,
-                    significance_type=significance_type,
-                )
+            return [
+                    Statistics.statistics_from_data(
+                        aovs_ndarr[i],
+                        [periods, period_dts],
+                        True,
+                        n=n_stats,
+                        significance_type=significance_type,
+                    )
+                    for i in range(time_length)
+                ]
 
-                all_stats.append(stats)
-            
-            return all_stats
         elif output == 'periodogram':
             return [Periodogram(data, [periods, period_dts], True)
                     for data in aovs_ndarr]

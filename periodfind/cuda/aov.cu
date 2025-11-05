@@ -41,16 +41,18 @@ __host__ __device__ size_t AOV::PhaseBin(float phase_val) const {
 
 extern __shared__ uint32_t shared_bytes[];
 
-__global__ void FoldBinKernel(const float* times,
-                              const float* mags,
+__global__ void FoldBinKernel(const float* __restrict__ times,
+                              const float* __restrict__ mags,
                               const size_t length,
-                              const float* periods,
-                              const float* period_dts,
+                              const float* __restrict__ periods,
+                              const float* __restrict__ period_dts,
                               const AOV aov,
                               AOVData* data) {
     uint32_t* sh_count = &shared_bytes[0];
-    float* sh_sums = (float*)&shared_bytes[aov.NumPhaseBins()];
-    float* sh_sq_sums = (float*)&shared_bytes[2 * aov.NumPhaseBins()];
+    float* __restrict__ sh_sums = (float*)&shared_bytes[aov.NumPhaseBins()];
+    float* __restrict__ sh_sq_sums =
+        (float*)&shared_bytes[2 * aov.NumPhaseBins()];
+    size_t num_phase_bin_overlap = aov.NumPhaseBinOverlap();
 
     for (size_t idx = threadIdx.x; idx < aov.NumPhaseBins();
          idx += blockDim.x) {
@@ -75,18 +77,12 @@ __global__ void FoldBinKernel(const float* times,
         float t = times[idx];
         float t_corr = t - pdt_corr * t * t;
         float folded = fabsf(modff(t_corr / period, &i_part));
-
         float mag = mags[idx];
-
         size_t bin = aov.PhaseBin(folded);
 
-        for (size_t i = 0; i < aov.NumPhaseBinOverlap(); i++) {
-            size_t idx = (bin + i) % aov.NumPhaseBins();
-
-            atomicAdd(&sh_count[bin], 1);
-            atomicAdd(&sh_sums[bin], mag);
-            atomicAdd(&sh_sq_sums[bin], mag * mag);
-        }
+        atomicAdd(&sh_count[bin], num_phase_bin_overlap);
+        atomicAdd(&sh_sums[bin], num_phase_bin_overlap * mag);
+        atomicAdd(&sh_sq_sums[bin], num_phase_bin_overlap * mag * mag);
     }
 
     __syncthreads();
@@ -105,7 +101,7 @@ __global__ void AOVKernel(const AOVData* data,
                           const float length,
                           const float avg,
                           const AOV aov,
-                          float* aovs) {
+                          float* __restrict__ aovs) {
     size_t thread_id = threadIdx.x + blockIdx.x * blockDim.x;
 
     if (thread_id >= num_hists)
@@ -300,14 +296,11 @@ float* AOV::CalcAOVVals(float* times,
 void AOV::CalcAOVValsBatched(const std::vector<float*>& times,
                              const std::vector<float*>& mags,
                              const std::vector<size_t>& lengths,
-                             const float* periods,
-                             const float* period_dts,
+                             const float* __restrict__ periods,
+                             const float* __restrict__ period_dts,
                              const size_t num_periods,
                              const size_t num_p_dts,
-                             float* aov_out) const {
-    // TODO: Use async memory transferring
-    // TODO: Look at ways of batching data transfer.
-
+                             float* __restrict__ aov_out) const {
     // Size of one AOV out array, and total AOV output size.
     size_t aov_out_size = num_periods * num_p_dts * sizeof(float);
     size_t aov_size_total = aov_out_size * lengths.size();
@@ -333,16 +326,15 @@ void AOV::CalcAOVValsBatched(const std::vector<float*>& times,
     gpuErrchk(cudaMalloc(&dev_aovs, aov_out_size));
 
     // Kernel launch information for the fold & bin step
-    const size_t num_threads_fb = 256;
+    const size_t num_threads_fb = 64;
     const size_t shared_bytes_fb = NumPhaseBins() * sizeof(AOVData);
     const dim3 grid_dim_fb = dim3(num_periods, num_p_dts);
 
-    // Kernel launch information for the ce calculation step
-    const size_t num_threads_aov = 256;
+    // Kernel launch information for the AOV calculation step
+    const size_t num_threads_aov = 64;
     const size_t num_blocks_aov = (num_hists / num_threads_aov) + 1;
-    const size_t shared_bytes_aov = num_threads_aov * sizeof(float);
 
-    // Buffer size (large enough for longest light curve)
+    // Buffer size (large enough for the longest light curve)
     auto max_length = std::max_element(lengths.begin(), lengths.end());
     const size_t buffer_length = *max_length;
     const size_t buffer_bytes = sizeof(float) * buffer_length;
@@ -352,41 +344,92 @@ void AOV::CalcAOVValsBatched(const std::vector<float*>& times,
     gpuErrchk(cudaMalloc(&dev_times_buffer, buffer_bytes));
     gpuErrchk(cudaMalloc(&dev_mags_buffer, buffer_bytes));
 
+    // Pinned memory to prevent page-locking
+    size_t total_elements = 0;
     for (size_t i = 0; i < lengths.size(); i++) {
-        float mean_mag = ArrayMean(mags[i], lengths[i]);
-
-        // Copy light curve into device buffer
-        const size_t curve_bytes = lengths[i] * sizeof(float);
-        cudaMemcpy(dev_times_buffer, times[i], curve_bytes,
-                   cudaMemcpyHostToDevice);
-        cudaMemcpy(dev_mags_buffer, mags[i], curve_bytes,
-                   cudaMemcpyHostToDevice);
-
-        // Zero AOV output
-        gpuErrchk(cudaMemset(dev_aovs, 0, aov_out_size));
-
-        // NOTE: An AOV object is small enough that we can pass it
-        //       in the registers by dereferencing it.
-
-        FoldBinKernel<<<grid_dim_fb, num_threads_fb, shared_bytes_fb>>>(
-            dev_times_buffer, dev_mags_buffer, lengths[i], dev_periods,
-            dev_period_dts, *this, dev_hists);
-
-        AOVKernel<<<num_blocks_aov, num_threads_aov, shared_bytes_aov>>>(
-            dev_hists, num_hists, lengths[i], mean_mag, *this, dev_aovs);
-
-        // Copy AOV data back to host
-        cudaMemcpy(&aov_out[i * num_hists], dev_aovs, aov_out_size,
-                   cudaMemcpyDeviceToHost);
+        total_elements += lengths[i];
     }
 
-    // Free all of the GPU memory
+    size_t contiguous_offset = 0;
+    float* __restrict__ host_times_contiguous;
+    float* __restrict__ host_mags_contiguous;
+    float* __restrict__ mean_mags = new float[lengths.size()];
+    gpuErrchk(cudaHostAlloc((void**)&host_times_contiguous,
+                            total_elements * sizeof(float),
+                            cudaHostAllocDefault));
+    gpuErrchk(cudaHostAlloc((void**)&host_mags_contiguous,
+                            total_elements * sizeof(float),
+                            cudaHostAllocDefault));
+
+    for (size_t i = 0; i < lengths.size(); i++) {
+        mean_mags[i] = ArrayMean(mags[i], lengths[i]);
+        memcpy(host_times_contiguous + contiguous_offset, times[i],
+               lengths[i] * sizeof(float));
+        memcpy(host_mags_contiguous + contiguous_offset, mags[i],
+               lengths[i] * sizeof(float));
+
+        contiguous_offset += lengths[i];
+    }
+
+    const size_t num_streams = 4;
+    cudaStream_t streams[num_streams];
+    for (size_t i = 0; i < num_streams; i++) {
+        gpuErrchk(cudaStreamCreate(&streams[i]));
+    }
+
+    size_t curve_offset = 0;
+    for (size_t batch_idx = 0; batch_idx < lengths.size();
+         batch_idx += num_streams) {
+        for (size_t stream_idx = 0; stream_idx < num_streams; stream_idx++) {
+            const size_t stream_batch_idx = batch_idx + stream_idx;
+            if (stream_batch_idx >= lengths.size()) {
+                break;
+            }
+
+            const size_t curve_bytes =
+                lengths[stream_batch_idx] * sizeof(float);
+
+            gpuErrchk(cudaMemcpyAsync(
+                dev_times_buffer, host_times_contiguous + curve_offset,
+                curve_bytes, cudaMemcpyHostToDevice, streams[stream_idx]));
+            gpuErrchk(cudaMemcpyAsync(
+                dev_mags_buffer, host_mags_contiguous + curve_offset,
+                curve_bytes, cudaMemcpyHostToDevice, streams[stream_idx]));
+
+            gpuErrchk(cudaMemsetAsync(dev_aovs, 0, aov_out_size,
+                                      streams[stream_idx]));
+
+            FoldBinKernel<<<grid_dim_fb, num_threads_fb, shared_bytes_fb,
+                            streams[stream_idx]>>>(
+                dev_times_buffer, dev_mags_buffer, lengths[stream_batch_idx],
+                dev_periods, dev_period_dts, *this, dev_hists);
+
+            AOVKernel<<<num_blocks_aov, num_threads_aov, 0,
+                        streams[stream_idx]>>>(
+                dev_hists, num_hists, lengths[stream_batch_idx],
+                mean_mags[stream_batch_idx], *this, dev_aovs);
+
+            gpuErrchk(cudaMemcpyAsync(
+                &aov_out[stream_batch_idx * num_hists], dev_aovs, aov_out_size,
+                cudaMemcpyDeviceToHost, streams[stream_idx]));
+
+            curve_offset += curve_bytes / sizeof(float);
+        }
+    }
+
+    for (size_t i = 0; i < num_streams; ++i) {
+        gpuErrchk(cudaStreamSynchronize(streams[i]));
+        gpuErrchk(cudaStreamDestroy(streams[i]));
+    }
+
     gpuErrchk(cudaFree(dev_periods));
     gpuErrchk(cudaFree(dev_period_dts));
     gpuErrchk(cudaFree(dev_hists));
     gpuErrchk(cudaFree(dev_aovs));
     gpuErrchk(cudaFree(dev_times_buffer));
     gpuErrchk(cudaFree(dev_mags_buffer));
+    cudaFreeHost(host_times_contiguous);
+    cudaFreeHost(host_mags_contiguous);
 }
 
 float* AOV::CalcAOVValsBatched(const std::vector<float*>& times,
