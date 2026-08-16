@@ -32,10 +32,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # Separate repos per variant (matching fiesta / fiesta-gpu), not tags.
           - variant: cpu
             dockerfile: Dockerfile
+            repo_suffix: ""
           - variant: gpu
             dockerfile: Dockerfile.gpu
+            repo_suffix: "-gpu"
     steps:
       - uses: actions/checkout@v4
 
@@ -58,13 +61,9 @@ jobs:
       - name: Compute image tags
         id: tags
         run: |
-          repo="${{ secrets.DOCKERHUB_USERNAME }}/periodfind"
-          v="${{ matrix.variant }}"
+          repo="${{ secrets.DOCKERHUB_USERNAME }}/periodfind${{ matrix.repo_suffix }}"
           sha="${GITHUB_SHA::12}"
-          tags="${repo}:${v},${repo}:${v}-${sha}"
-          # CPU is the default runtime, so it also claims :latest.
-          if [ "$v" = "cpu" ]; then tags="${tags},${repo}:latest"; fi
-          echo "tags=$tags" >> "$GITHUB_OUTPUT"
+          echo "tags=${repo}:latest,${repo}:${sha}" >> "$GITHUB_OUTPUT"
 
       - name: Build and push (${{ matrix.variant }})
         uses: docker/build-push-action@v6
