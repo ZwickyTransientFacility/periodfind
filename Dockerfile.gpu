@@ -20,15 +20,17 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 ENV CUDA_HOME=/usr/local/cuda
 ENV PATH="${CUDA_HOME}/bin:${PATH}"
 
-# Build tooling + the GPU backend's pycuda + the bridge's runtime deps.
-RUN pip3 install --no-cache-dir --break-system-packages \
+# Build tooling + the GPU backend's pycuda + the bridge's runtime deps. The
+# CUDA base is Ubuntu 22.04, whose pip predates (and doesn't need)
+# --break-system-packages, so a plain system install is correct here.
+RUN pip3 install --no-cache-dir \
         numpy cython maturin pycuda astropy matplotlib requests
 
 # Install periodfind: `pip install .` compiles the CUDA Cython extensions
 # (periodfind.gpu), then the Rust crate provides the CPU backend.
 COPY . /opt/periodfind
-RUN pip3 install --no-cache-dir --break-system-packages /opt/periodfind \
-    && pip3 install --no-cache-dir --break-system-packages /opt/periodfind/rust
+RUN pip3 install --no-cache-dir /opt/periodfind \
+    && pip3 install --no-cache-dir /opt/periodfind/rust
 
 # Build-time check runs on a GPU-less runner, so only assert the CPU path here;
 # the GPU kernels are exercised at run time on a GPU slot.
