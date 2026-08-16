@@ -26,11 +26,16 @@ ENV PATH="${CUDA_HOME}/bin:${PATH}"
 RUN pip3 install --no-cache-dir \
         numpy cython maturin pycuda astropy matplotlib requests
 
-# Install periodfind: `pip install .` compiles the CUDA Cython extensions
-# (periodfind.gpu), then the Rust crate provides the CPU backend.
+# Install periodfind. The Rust CPU backend (periodfind_cpu) goes first so the
+# editable install below satisfies that dependency locally instead of from
+# PyPI. The editable install compiles the CUDA Cython extensions in place and
+# keeps the source package importable — a plain `pip install .` ships only the
+# built .so's, dropping the pure-python device API (set_device). This mirrors
+# periodfind's own CUDA CI. PYTHONPATH pins imports to the source tree.
 COPY . /opt/periodfind
-RUN pip3 install --no-cache-dir /opt/periodfind \
-    && pip3 install --no-cache-dir /opt/periodfind/rust
+RUN pip3 install --no-cache-dir /opt/periodfind/rust \
+    && pip3 install --no-cache-dir -e /opt/periodfind
+ENV PYTHONPATH=/opt/periodfind
 
 # Build-time check runs on a GPU-less runner, so only assert the CPU path here;
 # the GPU kernels are exercised at run time on a GPU slot.
