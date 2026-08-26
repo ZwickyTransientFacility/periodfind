@@ -138,13 +138,13 @@ Make sure you have loaded a cuda model and installed nvcc.
 
 For DELTA users, you can follow these steps:
 
-### Installation on DELTA
+### Installation on Swinburne Cluster
 
 Create a conda environment and activate it.
 
 ```bash
-conda create --name periodfind python=3.10
-conda activate periodfind.
+conda create --name periodfind python=3.11
+conda activate periodfind
 ```
 
 Pick a cuda model of your choice. 
@@ -159,37 +159,11 @@ Load an available model.
 module load cuda/12.8
 ```
 
-GPU Backend for periodfind uses pycuda.
-
-```bash
-pip install pycuda
-```
-
-Check where module puts cuda.
-
-```bash
-echo $CUDA_HOME
-```
-Set the environment variables so the compiler can find cuda.
-
-```bash
-export CUDA_ROOT=$CUDA_HOME # or the output from echo $CUDA_HOME
-export PATH=$CUDA_ROOT/bin:$PATH
-export LD_LIBRARY_PATH=$CUDA_ROOT/lib64:$LD_LIBRARY_PATH
-```
-
 Install the dependencies.
 
 ```bash
-pip install cython numpy
+pip install pycuda numpy cython
 ```
-
-Clone the repository.
-
-```bash
-git clone https://github.com/scope-ml/periodfind.git
-```
-
 
 Install Rust toolchain.
 ```bash
@@ -207,7 +181,7 @@ maturin develop --release
 Run the installation for periodfind.
 ```bash
 cd ..
-pip install -e .
+pip install .
 ```
 
 ### GPU backend (CUDA)
